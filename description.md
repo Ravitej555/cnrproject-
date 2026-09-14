@@ -1,7 +1,13 @@
 # SMART HEALTH ADVISORY SYSTEM USING AI
 ## Comprehensive 3D Human Anatomy Visualization & Environmental Risk Modeling
 
+### 🌐 Live Demo URLs:
+* **Interactive 3D Web Application:** [https://ravitej555.github.io/cnrproject-/](https://ravitej555.github.io/cnrproject-/)
+* **Direct 3D Anatomy Atlas:** [https://ravitej555.github.io/cnrproject-/anatomy.html](https://ravitej555.github.io/cnrproject-/anatomy.html)
+* **Direct AI Health Advisor Dashboard:** [https://ravitej555.github.io/cnrproject-/anatomy.html?openAdvisor=true](https://ravitej555.github.io/cnrproject-/anatomy.html?openAdvisor=true)
+
 ---
+
 
 ## 1. Executive Summary & Project Overview
 

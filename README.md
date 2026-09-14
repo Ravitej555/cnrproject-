@@ -1,9 +1,18 @@
-﻿# SMART HEALTH ADVISORY SYSTEM
+# SMART HEALTH ADVISORY SYSTEM
 ## Using AI With 3D Human Body Visualization
 
-> **College Project - AI-Assisted Health Risk Assessment - Interactive 3D Anatomy**
+> **College Project — AI-Assisted Health Risk Assessment — Interactive 3D Anatomy**
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-brightgreen?style=for-the-badge&logo=github)](https://ravitej555.github.io/cnrproject-/)
+[![GitHub Actions](https://img.shields.io/badge/Deployment-Automated-blue?style=for-the-badge&logo=githubactions)](https://github.com/Ravitej555/cnrproject-/actions)
+
+### 🌐 Live Demo URLs:
+* **Interactive 3D Web Application:** [https://ravitej555.github.io/cnrproject-/](https://ravitej555.github.io/cnrproject-/)
+* **Direct 3D Anatomy Atlas:** [https://ravitej555.github.io/cnrproject-/anatomy.html](https://ravitej555.github.io/cnrproject-/anatomy.html)
+* **Direct AI Health Advisor Dashboard:** [https://ravitej555.github.io/cnrproject-/anatomy.html?openAdvisor=true](https://ravitej555.github.io/cnrproject-/anatomy.html?openAdvisor=true)
 
 ---
+
 
 ## 1. Project Title
 

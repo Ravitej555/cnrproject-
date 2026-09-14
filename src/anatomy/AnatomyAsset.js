@@ -4,10 +4,12 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { groupSemanticNodes } from './assetSemantics.js';
 
 export async function loadDracoAnatomyAsset(url, { onProgress = () => {} } = {}) {
-  const draco = new DRACOLoader().setDecoderPath('/draco/');
+  const draco = new DRACOLoader().setDecoderPath(`${import.meta.env.BASE_URL}draco/`);
   const loader = new GLTFLoader().setDRACOLoader(draco);
+  const fullUrl = url.startsWith('/') ? `${import.meta.env.BASE_URL}${url.slice(1)}` : url;
   try {
-    const gltf = await loader.loadAsync(url, event => onProgress(event.total ? event.loaded / event.total : 0, event.loaded, event.total));
+    const gltf = await loader.loadAsync(fullUrl, event => onProgress(event.total ? event.loaded / event.total : 0, event.loaded, event.total));
+
     const root = gltf.scene;
     root.updateMatrixWorld(true);
     const semanticNodes = [];

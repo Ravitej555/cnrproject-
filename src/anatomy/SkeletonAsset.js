@@ -156,10 +156,11 @@ function adjustBoneGeometry(mesh, name) {
 }
 
 export async function loadSkeletonAsset({ onProgress = () => {} } = {}) {
-  const draco = new DRACOLoader().setDecoderPath('/draco/');
+  const draco = new DRACOLoader().setDecoderPath(`${import.meta.env.BASE_URL}draco/`);
   const loader = new GLTFLoader().setDRACOLoader(draco);
   try {
-    const gltf = await loader.loadAsync('/models/overview-skeleton.glb', event => {
+    const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/overview-skeleton.glb`, event => {
+
       onProgress(event.total ? event.loaded / event.total : 0, event.loaded, event.total);
     });
     const source = gltf.scene;

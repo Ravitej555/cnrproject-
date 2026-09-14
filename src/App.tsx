@@ -57,6 +57,8 @@ const headerVariants: Variants = {
 
 
 // --- MAIN APP COMPONENT ---
+const BASE = import.meta.env.BASE_URL;
+
 export default function App() {
   // STATE
   const [showVideo, setShowVideo] = useState(false);
@@ -71,8 +73,8 @@ export default function App() {
   }, []);
 
   const navLinks = [
-    { label: "3D Anatomy", href: "/anatomy.html" },
-    { label: "AI Advisor", href: "/anatomy.html?openAdvisor=true" },
+    { label: "3D Anatomy", href: `${BASE}anatomy.html` },
+    { label: "AI Advisor", href: `${BASE}anatomy.html?openAdvisor=true` },
     { label: "Capabilities", href: "#capabilities" },
     { label: "System Flow", href: "#system-flow" },
   ];
@@ -97,10 +99,11 @@ export default function App() {
               muted
               playsInline
               className="w-full h-full object-cover"
-              src="/assets/hero-video.mp4"
+              src={`${BASE}assets/hero-video.mp4`}
             />
           </motion.div>
         )}
+
 
         {/* 1A. HEADER (NHM Logo) */}
         <motion.header
@@ -198,7 +201,7 @@ export default function App() {
                 </a>
               ))}
               <a
-                href="/anatomy.html?openAdvisor=true"
+                href={`${BASE}anatomy.html?openAdvisor=true`}
                 className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-black text-white hover:bg-neutral-800 transition-colors text-[9px] font-mono tracking-wider w-fit"
               >
                 <span>AI Advisor</span>
@@ -241,12 +244,13 @@ export default function App() {
                 className="md:hidden absolute top-full left-0 w-full bg-[#fcfcfc] border-b border-gray-200 shadow-xl z-50 p-6 flex flex-col space-y-6 text-sm font-mono tracking-[0.2em] uppercase"
               >
                 <a
-                  href="/anatomy.html"
+                  href={`${BASE}anatomy.html`}
                   className="bg-black text-white px-4 py-3 rounded-md flex items-center justify-between"
                 >
                   <span>⚡ 3D Human Anatomy Atlas</span>
                   <ArrowUpRight size={16} />
                 </a>
+
                 {navLinks.map((item) => (
                   <a
                     key={item.label}
@@ -292,7 +296,7 @@ export default function App() {
             {/* Dual CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-2.5 w-full">
               <a
-                href="/anatomy.html"
+                href={`${BASE}anatomy.html`}
                 title="Launch 3D Anatomy Atlas"
                 className="group relative overflow-hidden bg-[#1a1a1a] px-5 py-3 border border-[#1a1a1a] rounded-md shadow-sm transition-all duration-300 hover:-translate-y-[0.5px] hover:shadow-[3px_3px_0px_rgba(17,17,17,0.5)] active:translate-y-0 active:shadow-none inline-flex items-center justify-center gap-2 cursor-pointer text-decoration-none"
               >
@@ -304,7 +308,7 @@ export default function App() {
               </a>
 
               <a
-                href="/anatomy.html?openAdvisor=true"
+                href={`${BASE}anatomy.html?openAdvisor=true`}
                 title="Open Smart Health Advisor with AI Risk Modeling"
                 className="group relative overflow-hidden bg-transparent px-5 py-3 border border-black/80 rounded-md shadow-sm transition-all duration-300 hover:-translate-y-[0.5px] hover:bg-black hover:text-white active:translate-y-0 inline-flex items-center justify-center gap-2 cursor-pointer text-decoration-none"
               >
@@ -360,7 +364,7 @@ export default function App() {
 
             {/* View Details button (links to 3D Simulator) */}
             <a
-              href="/anatomy.html"
+              href={`${BASE}anatomy.html`}
               title="Launch 3D Anatomy Simulator"
               className="group flex items-center gap-3 cursor-pointer text-left text-decoration-none"
             >
@@ -375,6 +379,7 @@ export default function App() {
                 Open Advisor
               </span>
             </a>
+
           </motion.div>
 
         </div>
@@ -584,7 +589,7 @@ export default function App() {
         <div className="h-[1px] bg-gray-800" />
         <div className="px-8 py-8 text-[10px] font-mono tracking-widest text-gray-500 uppercase bg-[#0a0a0a] flex justify-between items-center">
           <span>SMART HEALTH ADVISORY SYSTEM — COLLEGE PROJECT 2026</span>
-          <a href="/anatomy.html" className="text-gray-400 hover:text-white transition-colors no-underline">
+          <a href={`${BASE}anatomy.html`} className="text-gray-400 hover:text-white transition-colors no-underline">
             LAUNCH 3D ADVISOR ↗
           </a>
         </div>

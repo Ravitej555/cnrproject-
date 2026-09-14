@@ -15,6 +15,8 @@ interface Message {
 }
 
 const DEFAULT_API_URL = "http://127.0.0.1:8000";
+const BASE = import.meta.env.BASE_URL;
+
 
 // Helper to format inline bold, italics and code
 function formatInlineText(text: string) {
@@ -398,7 +400,7 @@ export default function ChatbotWidget() {
         >
           {/* Character Icon Image */}
           <img
-            src="/assets/bot-icon.png"
+            src={`${BASE}assets/bot-icon.png`}
             alt="AI Assistant"
             className="w-full h-full object-contain relative z-10 drop-shadow-[0_6px_16px_rgba(0,0,0,0.6)] group-hover:drop-shadow-[0_8px_24px_rgba(255,255,255,0.4)] transition-all"
           />
@@ -422,8 +424,9 @@ export default function ChatbotWidget() {
             <div className="p-4 border-b border-white/10 bg-white/3 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-neutral-900 border border-white/15 p-1.5 flex items-center justify-center flex-shrink-0">
-                  <img src="/assets/bot-icon.png" alt="Bot" className="w-full h-full object-contain" />
+                  <img src={`${BASE}assets/bot-icon.png`} alt="Bot" className="w-full h-full object-contain" />
                 </div>
+
                 <div>
                   <h3 className="text-sm font-semibold text-white leading-tight flex items-center gap-2">
                     AI Health & Anatomy Assistant
@@ -536,7 +539,7 @@ export default function ChatbotWidget() {
                   >
                     {!isUser && (
                       <div className="w-7 h-7 rounded-lg bg-neutral-900 border border-white/15 p-1 flex-shrink-0 mt-0.5">
-                        <img src="/assets/bot-icon.png" alt="Bot" className="w-full h-full object-contain" />
+                        <img src={`${BASE}assets/bot-icon.png`} alt="Bot" className="w-full h-full object-contain" />
                       </div>
                     )}
                     <div
@@ -575,8 +578,9 @@ export default function ChatbotWidget() {
               {isLoading && (
                 <div className="flex items-start gap-2.5 pt-1">
                   <div className="w-7 h-7 rounded-lg bg-neutral-900 border border-slate-400/40 p-1 flex-shrink-0 flex items-center justify-center">
-                    <img src="/assets/bot-icon.png" alt="Bot" className="w-full h-full object-contain opacity-90" />
+                    <img src={`${BASE}assets/bot-icon.png`} alt="Bot" className="w-full h-full object-contain opacity-90" />
                   </div>
+
                   <div className="flex flex-col gap-2.5 p-3.5 rounded-2xl bg-white/5 border border-slate-300/30 shadow-[0_4px_20px_rgba(0,0,0,0.35),0_0_15px_rgba(226,232,240,0.12)] backdrop-blur-md w-60">
                     {/* Frequency waveform pulse lines */}
                     <div className="flex items-center gap-1 h-4">
