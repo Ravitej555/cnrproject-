@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b0c0e" />
+    <meta name="description" content="An interactive, educational 3D atlas of the human body." />
+    <title>Human Body Atlas – Interactive 3D</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="stylesheet" href="/src/overflow.css" />
+    <style>
+      .back-nav-btn {
+        position: fixed;
+        top: 13px;
+        left: 295px;
+        height: 32px;
+        z-index: 99999;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(24, 25, 30, 0.9);
+        color: #f3f4f6;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(16px);
+        padding: 0 16px;
+        border-radius: 9999px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        text-decoration: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .back-nav-btn:hover {
+        background: #ffffff;
+        color: #0b0c0e;
+        border-color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 25px rgba(255, 255, 255, 0.3);
+      }
+      @media (max-width: 800px) {
+        .back-nav-btn {
+          left: auto;
+          right: 14px;
+          top: 11px;
+        }
+      }
+
+      /* Floating Bot Widget in 3D Atlas - Standalone Symbol */
+      .floating-bot-btn {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 72px;
+        height: 72px;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        cursor: pointer;
+        z-index: 99998;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.25s ease;
+      }
+      .floating-bot-btn:hover {
+        transform: scale(1.12) translateY(-3px);
+        filter: drop-shadow(0 8px 24px rgba(255, 255, 255, 0.45));
+      }
+      .floating-bot-btn.has-notification {
+        animation: botPulseNotification 1.8s infinite ease-in-out;
+      }
+      @keyframes botPulseNotification {
+        0%, 100% {
+          filter: drop-shadow(0 4px 12px rgba(56, 189, 248, 0.4));
+          transform: scale(1);
+        }
+        50% {
+          filter: drop-shadow(0 8px 26px rgba(56, 189, 248, 0.85));
+          transform: scale(1.08);
+        }
+      }
+      .floating-bot-btn img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: transparent;
+        filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5));
+      }
+      .anatomy-chat-window {
+        display: none;
+        position: fixed;
+        bottom: 98px;
+        right: 24px;
+        width: min(560px, calc(100vw - 32px));
+        height: min(720px, calc(100vh - 120px));
+        background: linear-gradient(175deg, rgba(26, 30, 40, 0.97) 0%, rgba(14, 16, 22, 0.98) 100%);
+        border: 1px solid rgba(203, 213, 225, 0.35);
+        border-radius: 22px;
+        box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85), 0 0 35px rgba(148, 163, 184, 0.15);
+
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
+        z-index: 99999;
+        flex-direction: column;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      .anatomy-chat-window.open {
+        display: flex;
+        animation: chatFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      @keyframes chatFadeIn {
+        from { opacity: 0; transform: translateY(16px) scale(0.96); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      .chat-header {
+        padding: 13px 16px;
+        background: linear-gradient(90deg, rgba(241, 245, 249, 0.08) 0%, rgba(148, 163, 184, 0.04) 100%);
+        border-bottom: 1px solid rgba(203, 213, 225, 0.18);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .chat-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .chat-title-wrap img {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        border: 1px solid rgba(226, 232, 240, 0.5);
+        padding: 3px;
+        background: linear-gradient(135deg, rgba(241, 245, 249, 0.2), rgba(148, 163, 184, 0.1));
+        object-fit: contain;
+      }
+      .chat-title {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #f8fafc;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .chat-subtitle {
+        font-size: 10.5px;
+        color: #cbd5e1;
+        margin: 2px 0 0;
+        font-family: monospace;
+      }
+      .chat-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .chat-action-btn, .chat-close-btn {
+        background: transparent;
+        border: 0;
+        color: #94a3b8;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 6px 8px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+      .chat-action-btn:hover { color: #f8fafc; background: rgba(241, 245, 249, 0.12); }
+      .chat-close-btn:hover { color: #fff; background: rgba(241, 245, 249, 0.12); }
+      .chat-body {
+        flex: 1;
+        padding: 18px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        font-size: 13.5px;
+        line-height: 1.6;
+      }
+      .chat-msg {
+        display: flex;
+        gap: 8px;
+        max-width: 94%;
+      }
+      .chat-msg.bot { align-self: flex-start; }
+      .chat-msg.user { align-self: flex-end; }
+      .chat-bubble {
+        padding: 14px 18px;
+        border-radius: 16px;
+        word-break: break-word;
+      }
+      .chat-msg.bot .chat-bubble {
+        background: rgba(241, 245, 249, 0.08);
+        border: 1px solid rgba(203, 213, 225, 0.22);
+        color: #f1f5f9;
+        border-bottom-left-radius: 4px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+      }
+      .chat-msg.user .chat-bubble {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        color: #0f172a;
+        border-bottom-right-radius: 4px;
+        font-weight: 500;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      }
+      /* Paragraph formatting styles */
+      .chat-bubble p {
+        margin: 0 0 10px 0;
+        line-height: 1.65;
+      }
+      .chat-bubble p:last-child {
+        margin-bottom: 0;
+      }
+      .chat-bubble strong {
+        color: #38bdf8;
+        font-weight: 600;
+      }
+      .chat-bubble ul, .chat-bubble ol {
+        margin: 8px 0 12px 20px;
+        padding: 0;
+      }
+      .chat-bubble li {
+        margin-bottom: 6px;
+        line-height: 1.6;
+      }
+      .chat-bubble li::marker {
+        color: #38bdf8;
+      }
+
+      /* Quick interactive prompt pills - Silver styling */
+      .chat-pills-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(226, 232, 240, 0.15);
+      }
+      .chat-pill-btn {
+        background: rgba(241, 245, 249, 0.1);
+        border: 1px solid rgba(203, 213, 225, 0.35);
+        color: #e2e8f0;
+        padding: 5px 11px;
+        border-radius: 999px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: left;
+        font-family: inherit;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .chat-pill-btn:hover {
+        background: rgba(241, 245, 249, 0.22);
+        border-color: #f8fafc;
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 10px rgba(226, 232, 240, 0.25);
+      }
+      /* Pulse lines loader form - Silver Platinum Edition */
+      .pulse-lines-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 14px 18px;
+        background: rgba(241, 245, 249, 0.06);
+        border: 1px solid rgba(203, 213, 225, 0.3);
+        border-radius: 16px;
+        border-bottom-left-radius: 4px;
+        width: 250px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 15px rgba(226, 232, 240, 0.12);
+        backdrop-filter: blur(12px);
+      }
+      .pulse-wave-lines {
+        display: flex;
+        align-items: center;
+        gap: 3.5px;
+        height: 16px;
+      }
+      .p-wave {
+        width: 3.5px;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #f8fafc, #94a3b8);
+        animation: pWaveMotion 1.2s ease-in-out infinite;
+      }
+      .p-wave-1 { height: 8px; animation-delay: 0.0s; }
+      .p-wave-2 { height: 16px; animation-delay: 0.15s; }
+      .p-wave-3 { height: 12px; animation-delay: 0.3s; }
+      .p-wave-4 { height: 18px; animation-delay: 0.45s; }
+      .p-wave-5 { height: 10px; animation-delay: 0.6s; }
+      .p-wave-6 { height: 6px; animation-delay: 0.75s; }
+
+      @keyframes pWaveMotion {
+        0%, 100% { transform: scaleY(0.35); opacity: 0.45; }
+        50% { transform: scaleY(1.15); opacity: 1; filter: drop-shadow(0 0 6px rgba(248, 250, 252, 0.8)); }
+      }
+
+      .pulse-skeleton-lines {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        width: 100%;
+      }
+      .pulse-line {
+        height: 9px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(226, 232, 240, 0.12) 0%, rgba(248, 250, 252, 0.55) 50%, rgba(226, 232, 240, 0.12) 100%);
+        background-size: 200% 100%;
+        animation: pLineShimmer 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      .pulse-line.line-1 { width: 92%; }
+      .pulse-line.line-2 { width: 100%; animation-delay: 0.2s; }
+      .pulse-line.line-3 { width: 68%; animation-delay: 0.4s; }
+
+      @keyframes pLineShimmer {
+        0% { background-position: 200% 0; opacity: 0.5; }
+        50% { opacity: 1; }
+        100% { background-position: -200% 0; opacity: 0.5; }
+      }
+      .chat-input-row {
+        padding: 10px 12px;
+        border-top: 1px solid rgba(226, 232, 240, 0.15);
+        display: flex;
+        gap: 8px;
+        background: rgba(0,0,0,0.25);
+      }
+      .chat-input-row input {
+        flex: 1;
+        background: rgba(241, 245, 249, 0.08);
+        border: 1px solid rgba(203, 213, 225, 0.25);
+        border-radius: 10px;
+        color: #fff;
+        padding: 8px 12px;
+        font-size: 12px;
+        outline: none;
+      }
+      .chat-input-row input:focus {
+        border-color: #cbd5e1;
+        box-shadow: 0 0 10px rgba(226, 232, 240, 0.2);
+      }
+      .chat-input-row button {
+        background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%);
+        color: #0f172a;
+        border: 0;
+        border-radius: 10px;
+        padding: 0 14px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <a href="/" class="back-nav-btn">
+      ← Back to Museum
+    </a>
+    <div id="app"></div>
+
+    <!-- Floating Chatbot Widget Trigger -->
+    <button id="floatingBotBtn" class="floating-bot-btn" title="Open Anatomy & Museum AI Guide">
+      <img src="/assets/bot-icon.png" alt="AI Skull" />
+    </button>
+
+    <!-- Chat Window Modal -->
+    <div id="anatomyChatWindow" class="anatomy-chat-window">
+      <div class="chat-header">
+        <div class="chat-title-wrap">
+          <img src="/assets/bot-icon.png" alt="AI Skull" />
+          <div>
+            <h4 class="chat-title">
+              Anatomy & RAG Guide
+              <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+            </h4>
+            <p class="chat-subtitle">Interactive 3D Body Assistant</p>
+          </div>
+        </div>
+        <div class="chat-header-actions">
+          <button id="chatExportBtn" class="chat-action-btn" title="Download Chat History (.txt)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+          <button id="chatClearBtn" class="chat-action-btn" title="Clear Chat">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+          <button id="chatCloseBtn" class="chat-close-btn" title="Close">✕</button>
+        </div>
+      </div>
+      <div id="chatMessages" class="chat-body">
+        <div class="chat-msg bot">
+          <div class="chat-bubble">
+            <p>Hello! 👋 I'm your <strong>3D Anatomy & History AI Guide</strong>.</p>
+            <p>Click on any 3D body structure (like the <strong>Leg</strong>, <strong>Femur</strong>, <strong>Heart</strong>, or <strong>Brain</strong>). I will always ask for your permission before providing an explanation!</p>
+          </div>
+        </div>
+      </div>
+      <form id="chatForm" class="chat-input-row">
+        <input id="chatInput" type="text" placeholder="Ask about anatomy or click any model part..." autocomplete="off" />
+        <button type="submit">➤</button>
+      </form>
+    </div>
+
+    <script type="module">
+      const botBtn = document.getElementById('floatingBotBtn');
+      const chatWin = document.getElementById('anatomyChatWindow');
+      const closeBtn = document.getElementById('chatCloseBtn');
+      const clearBtn = document.getElementById('chatClearBtn');
+      const exportBtn = document.getElementById('chatExportBtn');
+      const chatForm = document.getElementById('chatForm');
+      const chatInput = document.getElementById('chatInput');
+      const chatMsgs = document.getElementById('chatMessages');
+
+      let currentPendingPart = null;
+
+      const chatHistory = [
+        { role: 'bot', text: "Hello! 👋 I'm your 3D Anatomy & History AI Guide. Click on any 3D body structure (like the Leg, Femur, Heart, or Brain). I will always ask for your permission before providing an explanation!" }
+      ];
+
+      botBtn.addEventListener('click', () => {
+        chatWin.classList.toggle('open');
+        botBtn.classList.remove('has-notification');
+        if (chatWin.classList.contains('open')) {
+          chatInput.focus();
+          // If a body part was selected while chat was closed, show the permission prompt now
+          if (currentPendingPart && !currentPendingPart.prompted) {
+            currentPendingPart.prompted = true;
+            showPartPermissionPrompt(currentPendingPart);
+          }
+        }
+      });
+
+      closeBtn.addEventListener('click', () => {
+        chatWin.classList.remove('open');
+      });
+
+      clearBtn.addEventListener('click', () => {
+        chatMsgs.innerHTML = '';
+        chatHistory.length = 0;
+        currentPendingPart = null;
+        addMsg("Chat cleared! Click on any 3D body structure or ask a question.", 'bot');
+      });
+
+      // Export chat transcript
+      exportBtn.addEventListener('click', () => {
+        const timestamp = new Date().toLocaleString();
+        let transcript = "=================================================================\\n";
+        transcript += "3D HUMAN ANATOMY ATLAS & NATURAL HISTORY - CHAT TRANSCRIPT\\n";
+        transcript += "Exported: " + timestamp + "\\n";
+        transcript += "=================================================================\\n\\n";
+
+        chatHistory.forEach((msg, idx) => {
+          transcript += "-----------------------------------------------------------------\\n";
+          transcript += "[#" + (idx + 1) + "] " + (msg.role === 'user' ? 'USER' : 'AI GUIDE') + ":\\n";
+          transcript += "-----------------------------------------------------------------\\n";
+          transcript += msg.text + "\\n\\n";
+        });
+
+        transcript += "=================================================================\\n";
+        transcript += "End of Chat Log\\n";
+
+        const blob = new Blob([transcript], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "Anatomy_AI_Chat_Export_" + Date.now() + ".txt";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+
+      // Formatter for markdown to HTML paragraphs
+      function formatParagraphs(text) {
+        const blocks = text.split(/\\n\\s*\\n/);
+        return blocks.map(block => {
+          const trimmed = block.trim();
+          if (!trimmed) return '';
+          
+          const lines = trimmed.split('\\n');
+          const isList = lines.every(l => /^\\s*[-*•]\\s+/.test(l));
+          if (isList) {
+            const listItems = lines.map(l => {
+              let clean = l.replace(/^\\s*[-*•]\\s+/, '');
+              clean = clean.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
+              return '<li>' + clean + '</li>';
+            }).join('');
+            return '<ul>' + listItems + '</ul>';
+          }
+
+          let formatted = lines.map(l => {
+            return l.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
+          }).join('<br>');
+
+          return '<p>' + formatted + '</p>';
+        }).join('');
+      }
+
+      function addMsg(text, sender) {
+        chatHistory.push({ role: sender, text: text });
+        const wrap = document.createElement('div');
+        wrap.className = 'chat-msg ' + sender;
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble';
+
+        if (sender === 'bot') {
+          bubble.innerHTML = formatParagraphs(text);
+        } else {
+          bubble.textContent = text;
+        }
+
+        wrap.appendChild(bubble);
+        chatMsgs.appendChild(wrap);
+        chatMsgs.scrollTop = chatMsgs.scrollHeight;
+      }
+
+      function addMsgWithPills(text, pills = []) {
+        chatHistory.push({ role: 'bot', text: text });
+        const wrap = document.createElement('div');
+        wrap.className = 'chat-msg bot';
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble';
+        bubble.innerHTML = formatParagraphs(text);
+
+        if (pills && pills.length > 0) {
+          const pillsRow = document.createElement('div');
+          pillsRow.className = 'chat-pills-row';
+          pills.forEach(p => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'chat-pill-btn';
+            btn.innerHTML = p.label;
+            btn.onclick = () => {
+              if (p.action === 'dismiss') {
+                currentPendingPart = null;
+                addMsg("No problem! Feel free to explore the 3D model, and let me know whenever you'd like an explanation.", 'bot');
+              } else if (p.prompt) {
+                currentPendingPart = null;
+                chatInput.value = p.prompt;
+                chatForm.dispatchEvent(new Event('submit'));
+              }
+            };
+            pillsRow.appendChild(btn);
+          });
+          bubble.appendChild(pillsRow);
+        }
+
+        wrap.appendChild(bubble);
+        chatMsgs.appendChild(wrap);
+        chatMsgs.scrollTop = chatMsgs.scrollHeight;
+      }
+
+      function showPulseLoader() {
+        const wrap = document.createElement('div');
+        wrap.className = 'chat-msg bot';
+        wrap.id = 'activePulseLoader';
+        wrap.innerHTML = `
+          <div class="pulse-lines-wrapper">
+            <div class="pulse-wave-lines">
+              <span class="p-wave p-wave-1"></span>
+              <span class="p-wave p-wave-2"></span>
+              <span class="p-wave p-wave-3"></span>
+              <span class="p-wave p-wave-4"></span>
+              <span class="p-wave p-wave-5"></span>
+              <span class="p-wave p-wave-6"></span>
+            </div>
+            <div class="pulse-skeleton-lines">
+              <div class="pulse-line line-1"></div>
+              <div class="pulse-line line-2"></div>
+              <div class="pulse-line line-3"></div>
+            </div>
+          </div>
+        `;
+        chatMsgs.appendChild(wrap);
+        chatMsgs.scrollTop = chatMsgs.scrollHeight;
+      }
+
+      function removePulseLoader() {
+        const loader = document.getElementById('activePulseLoader');
+        if (loader) loader.remove();
+      }
+
+      // Pure cohesive paragraph response for Leg anatomy and mechanics
+      function getLegGeminiResponse(partName = 'Leg') {
+        return `The human lower limb is an extraordinary engineering marvel designed for bipedal locomotion, dynamic shock absorption, and high-impact weight bearing. At its structural core lies the femur, the longest and strongest bone in the body, capable of withstanding compressive forces exceeding thirty times body weight. Its angled neck distributes axial load into the pelvis and knee joint, while the underlying tibia and fibula stabilize the lower leg, anchor critical muscles, and articulate with the ankle mortise.\\n\\nThe knee joint acts as a sophisticated synovial hinge, protected anteriorly by the patella. This sesamoid kneecap functions as a biomechanical pulley, magnifying quadriceps leverage by up to thirty percent during forward propulsion. Cruciate and collateral ligaments work in close tandem with the medial and lateral menisci to prevent joint dislocation, buffer running impact, and ensure rotational stability.\\n\\nLocomotive power is driven by synchronized antagonistic muscles, with the anterior quadriceps extending the knee and the posterior hamstrings flexing the joint. Distally, the gastrocnemius and soleus converge into the Achilles tendon, which functions like a high-tension spring that stores and returns elastic recoil energy with every stride. Oxygenated blood is continuously delivered by the high-pressure femoral artery, while motor innervation is orchestrated by the sciatic nerve down to the toes.`;
+      }
+
+      // Universal ChatGPT / Gemini response generator (Paragraph Form)
+      function getAnswer(q) {
+        const query = q.toLowerCase().trim();
+
+        // 1. General Greetings & Conversational
+        if (/^(hi|hello|hey|greetings|good morning|good evening|who are you|what can you do|help|start)/i.test(query)) {
+          return "Welcome to the Gemini and GPT AI Health Assistant. I am your AI Health and Anatomy Intelligence Engine, designed to provide comprehensive, paragraph-based medical and anatomical analysis across all eleven human body systems.\n\nYou can ask me detailed questions about human anatomy, physiological mechanisms, vital signs such as heart rate and blood pressure, environmental impacts like air quality, or how to navigate the interactive 3D model. Feel free to ask any health, medical, or scientific question to begin!";
+        }
+
+        // 2. Cardiovascular System / Heart Rate / Blood Pressure
+        if (/heart|cardio|bp|blood pressure|pulse|circulation|artery|vein|chest pain|palpitations|cardiovascular/i.test(query)) {
+          return "The human cardiovascular system operates as a continuous closed-loop circuit anchored by the heart, a dual-syncytium muscular pump driving approximately five liters of blood per minute through a vast vascular network spanning nearly sixty thousand miles. The high-pressure left ventricle propels oxygen-rich systemic blood through the aorta and systemic arteries to nourish peripheral tissue, while the right ventricle directs returning deoxygenated blood into the pulmonary circulation for gas exchange across alveolar capillary beds.\n\nHealthy resting cardiovascular parameters typically feature a heart rate between sixty and one hundred beats per minute, paired with a baseline blood pressure near one hundred and twenty over eighty millimeters of mercury. Sustained readings above one hundred and thirty over eighty indicate early arterial hypertension, which increases long-term myocardial workload. Environmental factors such as fine particulate air pollution (PM2.5) can cross the respiratory membrane into systemic circulation, triggering endothelial inflammation, vascular stiffness, and heightened cardiac strain. You can open the AI Health Advisor in the top bar to evaluate your cardiovascular vulnerability index!";
+        }
+
+        // 3. Respiratory System / Lungs / AQI / Oxygen / Asthma
+        if (/lung|respiratory|breath|air|aqi|pm2\.5|smok|asthma|cough|oxygen|spo2|alveoli/i.test(query)) {
+          return "The human respiratory system is engineered to maximize gas exchange across approximately three hundred million micro-alveoli, creating a total surface area of roughly seventy square meters. Inhalation is powered by the rhythmic contraction of the diaphragm muscle, which expands the thoracic cavity and pulls atmospheric oxygen deep into alveolar sacs where it diffuses directly into pulmonary capillaries while releasing carbon dioxide.\n\nEnvironmental air quality plays a crucial role in maintaining pulmonary health. While an Air Quality Index between zero and fifty represents pristine air balance, elevated index levels driven by fine particulate matter smaller than two point five micrometers can penetrate deep into lung tissue, causing airway inflammation, bronchospasm, and decreased oxygen saturation in arterial blood. Chronic exposure to polluted air or smoke compromises ciliary clearing mechanisms, highlighting the importance of protective filtration and regular vital tracking. You can select the Smog and Respiratory preset in the AI Health Advisor to visualize lung impact in 3D!";
+        }
+
+        // 4. Brain / Nerves / Nervous System / Stress / Headache
+        if (/brain|nerve|nervous|headache|migraine|dizz|stress|sleep|fatigue|memory|spine|neuron|synapses/i.test(query)) {
+          return "The central and peripheral nervous systems form the master electrochemical communications network of the human body, containing roughly eighty-six billion neurons that transmit information via action potentials across synaptic junctions using neurotransmitters such as acetylcholine, dopamine, and serotonin. The central nervous system, comprising the brain and spinal cord, orchestrates executive cognition, sensory perception, and autonomic signaling.\n\nAutonomic homeostasis relies on a dynamic balance between the sympathetic branch, which triggers the fight-or-flight stress response with elevated heart rate and cortisol release, and the parasympathetic branch, which promotes restorative rest and metabolic balance. Symptoms such as tension headaches, dizziness, or cognitive fatigue frequently signify underlying systemic dehydration, sleep debt, or prolonged autonomic strain. You can toggle the Nervous System layer in the left sidebar to isolate neural structures in 3D!";
+        }
+
+        // 5. Skeleton / Bones / Muscles / Joints / Leg
+        if (/skeleton|bone|muscle|joint|femur|leg|knee|patella|spine|skull|rib|cartilage|tendon/i.test(query)) {
+          return "The adult musculoskeletal system provides structural scaffolding, mechanical protection, and locomotive leverage through two hundred and six articulated bones divided into the axial skeleton of the head and torso and the appendicular skeleton of the limbs. This rigid framework anchors over six hundred skeletal muscles, enabling dynamic physical movement and stabilizing joint articulations under heavy kinetic loads.\n\nIn the lower body, the femur stands as the longest and strongest bone in the human skeleton, engineered to withstand compressive forces exceeding thirty times body weight during high-impact movement. The knee joint operates as a synovial hinge supported by collateral and cruciate ligaments, with the sesamoid patella functioning as a biomechanical pulley that increases quadriceps leverage during extension, while the Achilles tendon acts as a high-tension elastic spring storing recoil energy during gait. You can click directly on any bone in the 3D viewport or turn off the Skin layer to inspect the skeleton in 3D!";
+        }
+
+        // 6. Digestive / Stomach / Liver / Kidneys / Urinary
+        if (/digest|stomach|gut|liver|kidney|renal|urine|diet|food|metabol|nausea|pancreas|intestine/i.test(query)) {
+          return "The digestive system processes ingested nutrients through a sequential chemical pathway beginning in the esophagus and stomach, where hydrochloric acid maintaining an acidic pH hydrolyzes food matrices, before entering the small intestine for enzymatic digestion and portal venous absorption. Hepatic bile and pancreatic secretions further break down lipids and complex molecules to sustain cellular energy production and metabolic homeostasis.\n\nSimultaneously, the renal system performs plasma filtration through paired kidneys containing approximately two million nephrons that process roughly one hundred and eighty liters of blood plasma daily. The kidneys carefully regulate systemic fluid volume, acid-base pH balance, and electrolyte concentrations such as sodium and potassium, while secreting hormones that modulate blood pressure and red blood cell production. You can inspect Metabolic and GI risk indices inside the AI Health Advisor dashboard!";
+        }
+
+        // 7. Endocrine System & Hormones (Thyroid, Insulin, Cortisol)
+        if (/endocrine|hormone|insulin|thyroid|cortisol|pancreas|diabetes|gland|adrenal|estrogen|testosterone/i.test(query)) {
+          return "The endocrine system regulates systemic metabolism, growth, and cellular communication through chemical hormones secreted directly into the vascular bloodstream by specialized ductless glands including the pituitary, thyroid, pancreas, and adrenals. These chemical messengers coordinate physiological adaptations across distant organs to maintain tight internal stability.\n\nKey metabolic hormones include insulin and glucagon, produced by pancreatic islets to keep blood glucose levels tightly regulated within a normal fasting baseline. Meanwhile, adrenal glucocorticoids like cortisol mobilize glucose and blood pressure responses during stress challenges, while thyroid hormones modulate basal metabolic rate and cellular oxygen consumption throughout the body.";
+        }
+
+        // 8. Immune & Lymphatic System (Lymph nodes, Infection, Antibodies)
+        if (/immune|lymph|white blood|antibody|vaccine|infection|swelling|spleen|leukocyte|fever/i.test(query)) {
+          return "The human immune and lymphatic systems work in close harmony to defend the organism against biological pathogens while maintaining interstitial fluid balance. Innate immunity provides immediate, non-specific protection through epithelial barriers, phagocytic neutrophils, and macrophages, whereas adaptive immunity develops highly targeted immunological memory using specialized T-lymphocytes for cell-mediated defense and B-lymphocytes for circulating antibody production.\n\nThe lymphatic vascular network collects excess interstitial fluid from peripheral tissues and routes it through hundreds of lymph nodes distributed across key anatomical regions. As lymph passes through these node clusters, resident white blood cells filter out cellular debris and neutralize foreign micro-organisms before returning cleansed plasma into the venous blood circulation.";
+        }
+
+        // 9. Skin & Integumentary System
+        if (/skin|dermis|epidermis|integumentary|hair|nail|sweat|collagen|temperature/i.test(query)) {
+          return "The integumentary system, primarily comprising the skin, hair, and nails, serves as the body's primary physical barrier against environmental pathogens, ultraviolet radiation, and mechanical trauma. Spanning nearly two square meters in adults, the skin consists of an outer avascular epidermis providing a tough keratinized barrier, anchored to an underlying vascular dermis rich in collagen and elastic fibers.\n\nBeyond physical defense, the skin plays a central role in thermoregulation and fluid preservation. Through controlled vasodilation, vasoconstriction, and sweat evaporation from eccrine glands, the skin continuously adjusts heat loss to keep core body temperature stabilized near thirty-seven degrees Celsius.";
+        }
+
+        // 10. Universal Science, Health & Medical Fallback Generator
+        return `The human body operates as a highly coordinated biological ecosystem where eleven distinct organ systems interact continuously to maintain internal balance and physiological homeostasis for query "${q}". Every physical activity, emotional stressor, or ambient environmental factor triggers compensatory adaptations across vascular, neural, metabolic, and muscular networks.\n\nTo explore these structural connections further, you can select individual organs or skeletal layers directly in the 3D model, or open the AI Health Advisor in the top navigation bar to evaluate how your vital measurements and local air quality interact. Feel free to ask follow-up questions about any specific organ, physiological metric, or health topic!`;
+      }
+
+      // Helper function to render permission prompt for a clicked 3D body part
+      function showPartPermissionPrompt(part) {
+        const { name, isLeg } = part;
+        if (isLeg) {
+          const permissionPrompt = `🦴 **You selected the ${name || 'Leg'}!**\\n\\nWould you like to know more about how it works?`;
+          const pills = [
+            { 
+              label: '✅ Yes, tell me more', 
+              prompt: 'Yes, explain the complete anatomy, biomechanics, and locomotive function of the human leg.' 
+            },
+            { 
+              label: '🦴 Explain Femur & Knee Joint', 
+              prompt: 'Explain the femur bone and knee joint mechanics of the human leg.' 
+            },
+            { 
+              label: '🏃 Explain Muscles & Tendons', 
+              prompt: 'Explain the quadriceps, hamstrings, and Achilles tendon of the human leg.' 
+            },
+            { 
+              label: '✕ No, thanks', 
+              action: 'dismiss' 
+            }
+          ];
+          addMsgWithPills(permissionPrompt, pills);
+        } else {
+          const permissionPrompt = `🔍 **You selected: ${name || 'Body Structure'}!**\\n\\nWould you like to know more about how it functions?`;
+          const pills = [
+            { 
+              label: '✅ Yes, tell me more', 
+              prompt: `Explain the physiological function, structure, and clinical importance of the ${name}.` 
+            },
+            { 
+              label: '✕ No, thanks', 
+              action: 'dismiss' 
+            }
+          ];
+          addMsgWithPills(permissionPrompt, pills);
+        }
+      }
+
+      // ─── 3D Model Click Handler ───
+      // NOTE: Clicking the 3D model does NOT automatically pop open the chatbot window.
+      // It sets the selected part context and pulses the bot button so the user can open it when ready!
+      let lastSelectedPartTime = 0;
+      window.addEventListener('anatomy:select-part', (e) => {
+        const now = Date.now();
+        // Debounce repeated double-events within 400ms
+        if (now - lastSelectedPartTime < 400) return;
+        lastSelectedPartTime = now;
+
+        const { id, name, region, isLeg } = e.detail;
+        currentPendingPart = { id, name, region, isLeg, prompted: false };
+
+        // Pulse the floating button so user notices the bot is ready
+        botBtn.classList.add('has-notification');
+
+        // Only show prompt immediately if the chat window is ALREADY open
+        if (chatWin.classList.contains('open')) {
+          currentPendingPart.prompted = true;
+          botBtn.classList.remove('has-notification');
+          showPartPermissionPrompt(currentPendingPart);
+        }
+      });
+
+      // Submit Form
+      chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        let text = chatInput.value.trim();
+        if (!text) return;
+
+        // If user typed "yes" or "yeah" while a part was pending permission:
+        if (currentPendingPart && /^(yes|yeah|sure|yep|y|tell me more|ok|okay)$/i.test(text)) {
+          if (currentPendingPart.isLeg) {
+            text = 'Yes, explain the complete anatomy, biomechanics, and locomotive function of the human leg.';
+          } else {
+            text = `Explain the physiological function and structure of the ${currentPendingPart.name}.`;
+          }
+        }
+        currentPendingPart = null;
+
+        addMsg(text, 'user');
+        chatInput.value = '';
+
+        // Show pulse lines form loader
+        showPulseLoader();
+
+        // Try FastAPI
+        try {
+          const res = await fetch('http://127.0.0.1:8000/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              question: `${text}\n\n(Please write your entire answer in clear, flowing prose paragraphs without bullet points or headers.)`
+            }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.answer) {
+              removePulseLoader();
+              addMsg(data.answer, 'bot');
+              return;
+            }
+          }
+        } catch {}
+
+
+        // Fallback with minimal delay for instantaneous response
+        setTimeout(() => {
+          removePulseLoader();
+          addMsg(getAnswer(text), 'bot');
+        }, 120);
+      });
+
+    </script>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

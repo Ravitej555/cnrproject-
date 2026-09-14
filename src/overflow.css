@@ -1,0 +1,7 @@
+.browser-scroll { overflow-x: hidden; }
+.structure-list button,
+.structure-list button > span { min-width: 0; }
+button:focus-visible,input:focus-visible,[tabindex]:focus-visible,a:focus-visible {
+  outline: 3px solid #f0b878;
+  outline-offset: 3px;
+}
