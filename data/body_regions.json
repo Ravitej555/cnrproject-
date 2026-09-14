@@ -1,0 +1,10 @@
+﻿{
+  "head":      { "label": "Head",    "organs": ["brain"],                                "systems": ["Nervous system","Skeletal system"] },
+  "neck":      { "label": "Neck",    "organs": [],                                       "systems": ["Skeletal system","Circulatory system"] },
+  "chest":     { "label": "Chest",   "organs": ["heart","lungs"],                        "systems": ["Circulatory system","Respiratory system"] },
+  "abdomen":   { "label": "Abdomen", "organs": ["liver","stomach","kidneys","intestines"],"systems": ["Digestive system","Urinary system"] },
+  "left_arm":  { "label": "L.Arm",   "organs": [],                                       "systems": ["Muscular system","Skeletal system"] },
+  "right_arm": { "label": "R.Arm",   "organs": [],                                       "systems": ["Muscular system","Skeletal system"] },
+  "left_leg":  { "label": "L.Leg",   "organs": [],                                       "systems": ["Muscular system","Skeletal system"] },
+  "right_leg": { "label": "R.Leg",   "organs": [],                                       "systems": ["Muscular system","Skeletal system"] }
+}

@@ -1,0 +1,9 @@
+Draco is licensed under the Apache License, Version 2.0.
+
+Copyright 2016 The Draco Authors.
+
+Official license text:
+https://www.apache.org/licenses/LICENSE-2.0.txt
+
+Draco project and source:
+https://github.com/google/draco
