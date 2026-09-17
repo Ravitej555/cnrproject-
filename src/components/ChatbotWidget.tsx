@@ -35,11 +35,10 @@ function formatInlineText(text: string) {
   });
 }
 
-// Render message content into structured, well-spaced paragraphs
+// Render message content into structured, well-spaced markdown blocks (headings, lists, tips, paragraphs)
 function renderParagraphs(content: string) {
   if (!content) return null;
 
-  // Split into distinct blocks by multiple linebreaks or section breaks
   const rawBlocks = content.split(/\n\s*\n/);
 
   return rawBlocks.map((block, bIdx) => {
@@ -48,43 +47,100 @@ function renderParagraphs(content: string) {
 
     const lines = trimmed.split('\n');
 
-    // Bullet list detection
-    const isBulletList = lines.every(l => /^\s*[-*•]\s+/.test(l));
-    if (isBulletList) {
+    // 1. Standalone single-line heading
+    if (lines.length === 1 && /^#{1,4}\s+/.test(trimmed)) {
+      const headingText = trimmed.replace(/^#{1,4}\s+/, '');
       return (
-        <ul key={bIdx} className="my-2 pl-4 list-disc space-y-1.5 text-neutral-200">
-          {lines.map((l, lIdx) => (
-            <li key={lIdx} className="leading-relaxed">
-              {formatInlineText(l.replace(/^\s*[-*•]\s+/, ''))}
-            </li>
-          ))}
-        </ul>
+        <h4 key={bIdx} className="text-[14px] font-semibold text-white mt-3 mb-1.5 first:mt-0 flex items-center gap-1.5">
+          {formatInlineText(headingText)}
+        </h4>
       );
     }
 
-    // Numbered list detection
-    const isNumberedList = lines.every(l => /^\s*\d+[\.\)]\s+/.test(l));
-    if (isNumberedList) {
+    // 2. Standalone callout tip
+    if (trimmed.startsWith('💡') || /^(\*\*Tip|\*Tip|Tip:)/i.test(trimmed)) {
       return (
-        <ol key={bIdx} className="my-2 pl-4 list-decimal space-y-1.5 text-neutral-200">
-          {lines.map((l, lIdx) => (
-            <li key={lIdx} className="leading-relaxed">
-              {formatInlineText(l.replace(/^\s*\d+[\.\)]\s+/, ''))}
-            </li>
-          ))}
-        </ol>
+        <div key={bIdx} className="my-2.5 p-2.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-cyan-200 text-[12px] leading-relaxed shadow-sm">
+          {formatInlineText(trimmed)}
+        </div>
       );
     }
 
-    // Standard paragraph with spacing and line-break continuity
+    // 3. Multi-line block with mixed elements (headings, bullets, numbered lists, text)
+    const elements: React.ReactNode[] = [];
+    let currentList: React.ReactNode[] = [];
+    let isCurrentNumbered = false;
+
+    const flushList = (idxKey: string) => {
+      if (currentList.length > 0) {
+        if (isCurrentNumbered) {
+          elements.push(
+            <ol key={`ol-${idxKey}`} className="my-2 pl-4 list-decimal space-y-1.5 text-neutral-200">
+              {currentList}
+            </ol>
+          );
+        } else {
+          elements.push(
+            <ul key={`ul-${idxKey}`} className="my-2 pl-4 list-disc space-y-1.5 text-neutral-200">
+              {currentList}
+            </ul>
+          );
+        }
+        currentList = [];
+      }
+    };
+
+    lines.forEach((line, lIdx) => {
+      const lTrim = line.trim();
+      if (!lTrim) return;
+
+      if (/^#{1,4}\s+/.test(lTrim)) {
+        flushList(`${bIdx}-${lIdx}`);
+        const hText = lTrim.replace(/^#{1,4}\s+/, '');
+        elements.push(
+          <h4 key={`h-${bIdx}-${lIdx}`} className="text-[14px] font-semibold text-white mt-3 mb-1.5 first:mt-0 flex items-center gap-1.5">
+            {formatInlineText(hText)}
+          </h4>
+        );
+      } else if (/^\s*[-*•]\s+/.test(line)) {
+        if (isCurrentNumbered && currentList.length > 0) flushList(`${bIdx}-${lIdx}`);
+        isCurrentNumbered = false;
+        currentList.push(
+          <li key={`li-${bIdx}-${lIdx}`} className="leading-relaxed">
+            {formatInlineText(line.replace(/^\s*[-*•]\s+/, ''))}
+          </li>
+        );
+      } else if (/^\s*\d+[\.\)]\s+/.test(line)) {
+        if (!isCurrentNumbered && currentList.length > 0) flushList(`${bIdx}-${lIdx}`);
+        isCurrentNumbered = true;
+        currentList.push(
+          <li key={`li-${bIdx}-${lIdx}`} className="leading-relaxed">
+            {formatInlineText(line.replace(/^\s*\d+[\.\)]\s+/, ''))}
+          </li>
+        );
+      } else if (lTrim.startsWith('💡') || /^(\*\*Tip|\*Tip|Tip:)/i.test(lTrim)) {
+        flushList(`${bIdx}-${lIdx}`);
+        elements.push(
+          <div key={`tip-${bIdx}-${lIdx}`} className="my-2.5 p-2.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-cyan-200 text-[12px] leading-relaxed shadow-sm">
+            {formatInlineText(lTrim)}
+          </div>
+        );
+      } else {
+        flushList(`${bIdx}-${lIdx}`);
+        elements.push(
+          <p key={`p-${bIdx}-${lIdx}`} className="mb-2 last:mb-0 leading-relaxed text-inherit">
+            {formatInlineText(lTrim)}
+          </p>
+        );
+      }
+    });
+
+    flushList(`${bIdx}-end`);
+
     return (
-      <p key={bIdx} className="mb-3 last:mb-0 leading-relaxed text-inherit">
-        {lines.map((l, lIdx) => (
-          <span key={lIdx} className={lIdx > 0 ? "block mt-1" : "inline"}>
-            {formatInlineText(l)}
-          </span>
-        ))}
-      </p>
+      <div key={bIdx} className="mb-3 last:mb-0">
+        {elements}
+      </div>
     );
   });
 }
@@ -95,7 +151,7 @@ export default function ChatbotWidget() {
     {
       id: 'welcome',
       role: 'ai',
-      text: "Hello! 👋 I'm your **3D Anatomy & AI Health Assistant**.\n\nI can provide comprehensive explanations across:\n- **3D Human Anatomy:** Bones, organs, blood vessels, and nervous system dynamics.\n- **AI Health Advisor:** Explanations of vitals (Heart Rate, BP, SpO₂, BMI) and environmental air quality (AQI) risk calculations.\n\nYou can also upload any PDF document above to index its contents and ask cited questions!",
+      text: "### 👋 Welcome to the 3D Anatomy & Museum AI Assistant\nI am your interactive intelligence guide across human physiology, health analytics, and museum specimens.\n\n**What I can help you explore:**\n- **🦴 3D Human Anatomy:** 206 articulated bones, muscle biomechanics, circulatory networks, and neural pathways.\n- **📊 AI Health Advisor:** Real-time analysis of vitals (Heart Rate, BP, SpO₂, BMI) paired with ambient Air Quality Index (AQI).\n- **🦕 Prehistoric Exhibits:** Dinosaurs, fossil biomechanics, and natural history specimens.\n- **📄 Document Intelligence:** Upload research or medical PDFs to index them and ask cited questions!\n\n💡 **Tip:** Ask me any medical or anatomical question, or click any 3D body part to explore!",
     }
   ]);
   const [inputText, setInputText] = useState('');
@@ -225,57 +281,62 @@ export default function ChatbotWidget() {
     setTimeout(() => setExportNotice(false), 3000);
   };
 
-  // Universal ChatGPT / Gemini multi-system AI response engine (Paragraph Form)
+  // Universal ChatGPT / Gemini multi-system AI response engine (Structured Markdown)
   const generateChatGPTGeminiResponse = (query: string): string => {
     const q = query.toLowerCase().trim();
 
     // 1. Greetings & Conversational
     if (/^(hi|hello|hey|greetings|good morning|good evening|who are you|what can you do|help|start)/i.test(q)) {
-      return `Welcome to the Gemini and GPT AI Health Assistant. I am your AI Health and Anatomy Intelligence Engine, designed to provide comprehensive, paragraph-based medical and anatomical analysis across all eleven human body systems.\n\nYou can ask me detailed questions about human anatomy, physiological mechanisms, vital signs such as heart rate and blood pressure, environmental impacts like air quality, or how to navigate the interactive 3D model. Feel free to ask any health, medical, or scientific question to begin!`;
+      return `### 👋 Welcome to the 3D Anatomy & Health AI Assistant\nI am your interactive intelligence guide across human physiology, health analytics, and museum specimens.\n\n**What I can help you explore:**\n- **🦴 3D Human Anatomy:** 206 articulated bones, muscle biomechanics, circulatory networks, and neural pathways.\n- **📊 AI Health Advisor:** Real-time analysis of vitals (Heart Rate, BP, SpO₂, BMI) paired with ambient Air Quality Index (AQI).\n- **🦕 Prehistoric Exhibits:** Dinosaurs, fossil biomechanics, and natural history specimens.\n- **📄 Document Intelligence:** Upload research or medical PDFs to index them and ask cited questions!\n\n💡 **Tip:** Ask me any medical or anatomical question, or click any 3D body part to explore!`;
     }
 
-    // 2. Cardiovascular System / Heart / Blood Pressure
+    // 2. Prehistoric Specimens / Dinosaurs / Fossils / Paleontology
+    if (/dino|fossil|specimen|trex|t-rex|tyrannosaur|triceratop|pterodactyl|jurassic|cretaceous|paleontol|amber|extinct|prehistoric/i.test(q)) {
+      return `### 🦖 Prehistoric Specimens & Paleontology Exhibit\n\nOur museum collection features iconic prehistoric specimens preserved across geological eras:\n\n- **Tyrannosaurus Rex:** Late Cretaceous apex predator with a massive skull engineered for a bone-crushing bite force exceeding **35,000 Newtons**.\n- **Triceratops Prorsus:** Heavily armored ceratopsian possessing a fused solid-bone parietosquamosal frill and three defensive rostral horns.\n- **Pterodactyl & Pterosaurs:** Flying Mesozoic archosaurs with hollow pneumatic bones and elongated fourth wing fingers supporting membranous flight patagia.\n- **Fossilization Science:** Permineralization replaces organic bone matrices with silica and calcite over millions of years under anoxic sedimentary conditions.\n\n💡 **Museum Tip:** Scroll down to the **Prehistoric Specimens & Dinosaurs** gallery on the main landing page to view our curated 3D exhibits!`;
+    }
+
+    // 3. Cardiovascular System / Heart / Blood Pressure
     if (/heart|cardio|bp|blood pressure|pulse|circulation|artery|vein|chest pain|palpitations|cardiovascular/i.test(q)) {
-      return `The human cardiovascular system operates as a continuous closed-loop circuit anchored by the heart, a dual-syncytium muscular pump driving approximately five liters of blood per minute through a vast vascular network spanning nearly sixty thousand miles. The high-pressure left ventricle propels oxygen-rich systemic blood through the aorta and systemic arteries to nourish peripheral tissue, while the right ventricle directs returning deoxygenated blood into the pulmonary circulation for gas exchange across alveolar capillary beds.\n\nHealthy resting cardiovascular parameters typically feature a heart rate between sixty and one hundred beats per minute, paired with a baseline blood pressure near one hundred and twenty over eighty millimeters of mercury. Sustained readings above one hundred and thirty over eighty indicate early arterial hypertension, which increases long-term myocardial workload. Environmental factors such as fine particulate air pollution (PM2.5) can cross the respiratory membrane into systemic circulation, triggering endothelial inflammation, vascular stiffness, and heightened cardiac strain. You can open the AI Health Advisor in the top bar to evaluate your cardiovascular vulnerability index!`;
+      return `### 🫀 Cardiovascular System & Hemodynamics\n\nThe cardiovascular system operates as a continuous closed-loop hydraulic circuit anchored by the heart:\n\n- **Cardiac Output:** Pumps approximately **5 liters of blood per minute** through an arterial and venous network spanning nearly **60,000 miles**.\n- **Dual Ventricular Circuits:** The high-pressure left ventricle drives oxygenated blood into systemic circulation (**120/80 mmHg** normal baseline), while the right ventricle directs venous blood into low-pressure pulmonary capillaries for gas exchange.\n- **Clinical Vital Metrics:** Normal adult resting heart rate is **60–100 bpm**. Sustained blood pressure exceeding **130/80 mmHg** indicates stage-1 arterial hypertension.\n- **Air Quality Link (PM2.5):** Ultrafine particulates cross alveolar membranes into systemic blood, inducing endothelial inflammation, arterial stiffening, and elevated myocardial strain.\n\n💡 **Clinical Tip:** Open the **AI Health Advisor** in the top navigation to evaluate your cardiovascular vulnerability score based on vitals and local AQI!`;
     }
 
-    // 3. Respiratory System / Lungs / AQI / Oxygen / Asthma
+    // 4. Respiratory System / Lungs / AQI / Oxygen / Asthma
     if (/lung|respiratory|breath|air|aqi|pm2\.5|smok|asthma|cough|oxygen|spo2|alveoli/i.test(q)) {
-      return `The human respiratory system is engineered to maximize gas exchange across approximately three hundred million micro-alveoli, creating a total surface area of roughly seventy square meters. Inhalation is powered by the rhythmic contraction of the diaphragm muscle, which expands the thoracic cavity and pulls atmospheric oxygen deep into alveolar sacs where it diffuses directly into pulmonary capillaries while releasing carbon dioxide.\n\nEnvironmental air quality plays a crucial role in maintaining pulmonary health. While an Air Quality Index between zero and fifty represents pristine air balance, elevated index levels driven by fine particulate matter smaller than two point five micrometers can penetrate deep into lung tissue, causing airway inflammation, bronchospasm, and decreased oxygen saturation in arterial blood. Chronic exposure to polluted air or smoke compromises ciliary clearing mechanisms, highlighting the importance of protective filtration and regular vital tracking. You can select the Smog and Respiratory preset in the AI Health Advisor to visualize lung impact in 3D!`;
+      return `### 🫁 Respiratory Mechanics & Air Quality Impact\n\nThe respiratory system maximizes gas exchange through microscopic alveolar architecture:\n\n- **Alveolar Gas Exchange:** Over **300 million micro-alveoli** produce a vast gas exchange surface of approximately **70 m²** (roughly half a tennis court).\n- **Diaphragm Biomechanics:** Inhalation is powered by active diaphragmatic contraction, creating negative intrapleural pressure that draws atmospheric air into pulmonary lobes.\n- **Arterial Oxygenation (SpO₂):** Normal arterial blood oxygen saturation ranges between **95% and 100%**.\n- **Environmental AQI Tiers:**\n  • **0–50 (Good):** Optimal pulmonary respiratory balance.\n  • **101–150 (Moderate/Sensitive):** Early airway hyper-reactivity in asthma patients.\n  • **151–200+ (Unhealthy):** Deep PM2.5 penetration triggers bronchospasm, mucus hypersecretion, and ciliary paralysis.\n\n💡 **Interactive 3D Tip:** Select the *Smog & Respiratory* scenario in the AI Health Advisor to highlight bronchial and lung risk in 3D!`;
     }
 
-    // 4. Brain / Nerves / Nervous System / Stress / Headache
+    // 5. Brain / Nerves / Nervous System / Stress / Headache
     if (/brain|nerve|nervous|headache|migraine|dizz|stress|sleep|fatigue|memory|spine|neuron|synapses/i.test(q)) {
-      return `The central and peripheral nervous systems form the master electrochemical communications network of the human body, containing roughly eighty-six billion neurons that transmit information via action potentials across synaptic junctions using neurotransmitters such as acetylcholine, dopamine, and serotonin. The central nervous system, comprising the brain and spinal cord, orchestrates executive cognition, sensory perception, and autonomic signaling.\n\nAutonomic homeostasis relies on a dynamic balance between the sympathetic branch, which triggers the fight-or-flight stress response with elevated heart rate and cortisol release, and the parasympathetic branch, which promotes restorative rest and metabolic balance. Symptoms such as tension headaches, dizziness, or cognitive fatigue frequently signify underlying systemic dehydration, sleep debt, or prolonged autonomic strain. You can toggle the Nervous System layer in the left sidebar to isolate neural structures in 3D!`;
+      return `### 🧠 Nervous System & Neuro-Autonomic Regulation\n\nThe nervous system forms the master electrochemical signaling network of the human body:\n\n- **86 Billion Neurons:** Transmit electrical action potentials across synaptic clefts using specialized neurotransmitters (acetylcholine, dopamine, serotonin, GABA).\n- **Central Nervous System (CNS):** The brain and spinal cord orchestrate executive cognition, sensory processing, and autonomic reflexes.\n- **Autonomic Dual Balance:**\n  • **Sympathetic Division:** Initiates "Fight-or-Flight" responses, accelerating heart rate, dilating bronchioles, and mobilizing cortisol.\n  • **Parasympathetic Division:** Coordinates "Rest-and-Digest" recovery via the vagus nerve, reducing heart rate and facilitating cellular regeneration.\n- **Cephalea & Neural Strain:** Headaches, dizziness, and cognitive fatigue commonly reflect cerebral hypoperfusion, dehydration, or prolonged autonomic stress.\n\n💡 **Interactive 3D Tip:** Toggle the **Nervous System** layer in the left sidebar to trace major cranial nerves and the spinal cord in 3D!`;
     }
 
-    // 5. Musculoskeletal System / Skeleton / Bones / Femur / Leg / Knee
+    // 6. Musculoskeletal System / Skeleton / Bones / Femur / Leg / Knee
     if (/skeleton|bone|muscle|joint|femur|leg|knee|patella|spine|skull|rib|cartilage|tendon/i.test(q)) {
-      return `The adult musculoskeletal system provides structural scaffolding, mechanical protection, and locomotive leverage through two hundred and six articulated bones divided into the axial skeleton of the head and torso and the appendicular skeleton of the limbs. This rigid framework anchors over six hundred skeletal muscles, enabling dynamic physical movement and stabilizing joint articulations under heavy kinetic loads.\n\nIn the lower body, the femur stands as the longest and strongest bone in the human skeleton, engineered to withstand compressive forces exceeding thirty times body weight during high-impact movement. The knee joint operates as a synovial hinge supported by collateral and cruciate ligaments, with the sesamoid patella functioning as a biomechanical pulley that increases quadriceps leverage during extension, while the Achilles tendon acts as a high-tension elastic spring storing recoil energy during gait. You can click directly on any bone in the 3D viewport or turn off the Skin layer to inspect the skeleton in 3D!`;
+      return `### 🦴 Musculoskeletal Framework & Joint Biomechanics\n\nThe adult musculoskeletal system provides structural scaffolding, organ protection, and locomotive leverage:\n\n- **206 Articulated Bones:** Divided into the **Axial Skeleton** (80 bones: skull, vertebrae, ribcage) and the **Appendicular Skeleton** (126 bones: limbs, pectoral and pelvic girdles).\n- **600+ Skeletal Muscles:** Connected by dense collagenous tendons, generating dynamic force and stabilizing joints under kinetic loads.\n- **Femur Biomechanics:** The longest and strongest bone in the body, engineered to absorb compressive forces exceeding **30× body weight** during high-impact locomotion.\n- **Knee Joint Mechanics:** A complex synovial hinge stabilized by the cruciate (**ACL/PCL**) and collateral (**MCL/LCL**) ligaments, cushioned by the medial and lateral menisci.\n- **Patellar Leverage:** The sesamoid patella functions as a biomechanical pulley that increases quadriceps leverage by **up to 30%** during leg extension.\n- **Achilles Tendon Spring:** The body's strongest tendon, acting as a high-tension elastic spring storing and releasing kinetic recoil energy during gait.\n\n💡 **Interactive 3D Tip:** Click directly on any bone in the 3D viewport or turn off the **Skin** and **Muscular** layers to inspect the skeleton in 3D!`;
     }
 
-    // 6. Digestive & Renal Systems / Stomach / Liver / Kidneys
+    // 7. Digestive & Renal Systems / Stomach / Liver / Kidneys
     if (/digest|stomach|gut|liver|kidney|renal|urine|diet|food|metabol|nausea|pancreas|intestine/i.test(q)) {
-      return `The digestive system processes ingested nutrients through a sequential chemical pathway beginning in the esophagus and stomach, where hydrochloric acid maintaining an acidic pH hydrolyzes food matrices, before entering the small intestine for enzymatic digestion and portal venous absorption. Hepatic bile and pancreatic secretions further break down lipids and complex molecules to sustain cellular energy production and metabolic homeostasis.\n\nSimultaneously, the renal system performs plasma filtration through paired kidneys containing approximately two million nephrons that process roughly one hundred and eighty liters of blood plasma daily. The kidneys carefully regulate systemic fluid volume, acid-base pH balance, and electrolyte concentrations such as sodium and potassium, while secreting hormones that modulate blood pressure and red blood cell production. You can inspect Metabolic and GI risk indices inside the AI Health Advisor dashboard!`;
+      return `### 🧪 Digestive & Renal Physiological Systems\n\nThe digestive and excretory systems process nutrients, detoxify waste, and regulate fluid equilibrium:\n\n- **Gastrointestinal Hydrolysis:** Food is broken down in the stomach by hydrochloric acid (pH 1.5–2.0) and pepsin before passing into the small intestine for enzymatic digestion and nutrient absorption.\n- **Hepatic & Pancreatic Metabolism:** The liver synthesizes bile for lipid emulsification, while the pancreas delivers digestive enzymes and bicarbonate into the duodenum.\n- **Nephron Plasma Filtration:** Paired kidneys contain approximately **2 million nephrons** that filter **180 liters of blood plasma daily**, extracting metabolic waste while reclaiming electrolytes.\n- **Systemic Regulation:** The kidneys maintain fluid balance, acid-base pH, systemic blood pressure (via renin), and erythrocyte production (via erythropoietin).\n\n💡 **Clinical Tip:** Review the **Metabolic & GI Risk Index** in the AI Health Advisor to evaluate digestion and hydration metrics!`;
     }
 
-    // 7. Endocrine System & Hormones (Thyroid, Insulin, Cortisol)
+    // 8. Endocrine System & Hormones (Thyroid, Insulin, Cortisol)
     if (/endocrine|hormone|insulin|thyroid|cortisol|pancreas|diabetes|gland|adrenal|estrogen|testosterone/i.test(q)) {
-      return `The endocrine system regulates systemic metabolism, growth, and cellular communication through chemical hormones secreted directly into the vascular bloodstream by specialized ductless glands including the pituitary, thyroid, pancreas, and adrenals. These chemical messengers coordinate physiological adaptations across distant organs to maintain tight internal stability.\n\nKey metabolic hormones include insulin and glucagon, produced by pancreatic islets to keep blood glucose levels tightly regulated within a normal fasting baseline. Meanwhile, adrenal glucocorticoids like cortisol mobilize glucose and blood pressure responses during stress challenges, while thyroid hormones modulate basal metabolic rate and cellular oxygen consumption throughout the body.`;
+      return `### 🧬 Endocrine System & Hormonal Coordination\n\nThe endocrine system regulates long-term metabolic homeostasis, growth, and stress response via endocrine messengers:\n\n- **Hypothalamus-Pituitary Axis:** The master neuroendocrine gland coordinating thyroid, adrenal, and reproductive hormone cascades.\n- **Glucose Regulation:** Pancreatic beta cells release **insulin** to promote cellular glucose storage, while alpha cells secrete **glucagon** during fasting.\n- **Stress & Alertness:** The adrenal cortex secretes **cortisol** for glucose mobilization, and the adrenal medulla releases **adrenaline/epinephrine** for acute kinetic readiness.\n- **Basal Metabolic Rate:** Thyroid hormones (T3 and T4) govern cellular oxygen consumption and temperature regulation across all tissues.`;
     }
 
-    // 8. Immune & Lymphatic System (Lymph nodes, Infection, Antibodies)
+    // 9. Immune & Lymphatic System (Lymph nodes, Infection, Antibodies)
     if (/immune|lymph|white blood|antibody|vaccine|infection|swelling|spleen|leukocyte|fever/i.test(q)) {
-      return `The human immune and lymphatic systems work in close harmony to defend the organism against biological pathogens while maintaining interstitial fluid balance. Innate immunity provides immediate, non-specific protection through epithelial barriers, phagocytic neutrophils, and macrophages, whereas adaptive immunity develops highly targeted immunological memory using specialized T-lymphocytes for cell-mediated defense and B-lymphocytes for circulating antibody production.\n\nThe lymphatic vascular network collects excess interstitial fluid from peripheral tissues and routes it through hundreds of lymph nodes distributed across key anatomical regions. As lymph passes through these node clusters, resident white blood cells filter out cellular debris and neutralize foreign micro-organisms before returning cleansed plasma into the venous blood circulation.`;
+      return `### 🛡️ Immune Defense & Lymphatic Network\n\nThe immune and lymphatic networks collaborate to defend host tissues and regulate interstitial fluid:\n\n- **Innate Barrier Defense:** Rapid, non-specific protection provided by physical epithelium, neutrophils, and tissue macrophages.\n- **Adaptive Immunological Memory:** Tailored antigen defense mediated by **T-lymphocytes** (cell-mediated cytotoxicity) and **B-lymphocytes** (targeted antibody production).\n- **Lymphatic Filtration:** Interstitial fluid is collected and routed through hundreds of lymph nodes where resident leukocytes neutralize biological pathogens before fluid returns to venous blood.`;
     }
 
-    // 9. Skin & Integumentary System
+    // 10. Skin & Integumentary System
     if (/skin|dermis|epidermis|integumentary|hair|nail|sweat|collagen|temperature/i.test(q)) {
-      return `The integumentary system, primarily comprising the skin, hair, and nails, serves as the body's primary physical barrier against environmental pathogens, ultraviolet radiation, and mechanical trauma. Spanning nearly two square meters in adults, the skin consists of an outer avascular epidermis providing a tough keratinized barrier, anchored to an underlying vascular dermis rich in collagen and elastic fibers.\n\nBeyond physical defense, the skin plays a central role in thermoregulation and fluid preservation. Through controlled vasodilation, vasoconstriction, and sweat evaporation from eccrine glands, the skin continuously adjusts heat loss to keep core body temperature stabilized near thirty-seven degrees Celsius.`;
+      return `### 🧴 Integumentary System & Thermoregulation\n\nCovering approximately **2 m² in adults**, the skin forms the body's primary protective envelope:\n\n- **Epidermis & Dermis:** Stratified keratinized outer epithelium blocks pathogens and fluid loss, anchored by a tough vascular dermis rich in collagen and elastin.\n- **Thermoregulation:** Dermal blood vessel dilation/constriction and eccrine sweat evaporation stabilize core body temperature near **37°C (98.6°F)**.\n- **Sensory & Synthesis:** Houses dense tactile and thermal receptors, and synthesizes Vitamin D precursors upon solar ultraviolet-B exposure.`;
     }
 
-    // 10. Universal Science, Health & Medical Fallback Generator
-    return `The human body operates as a highly coordinated biological ecosystem where eleven distinct organ systems interact continuously to maintain internal balance and physiological homeostasis for query "${query}". Every physical activity, emotional stressor, or ambient environmental factor triggers compensatory adaptations across vascular, neural, metabolic, and muscular networks.\n\nTo explore these structural connections further, you can select individual organs or skeletal layers directly in the 3D model, or open the AI Health Advisor in the top navigation bar to evaluate how your vital measurements and local air quality interact. Feel free to ask follow-up questions about any specific organ, physiological metric, or health topic!`;
+    // 11. Universal Science, Health & Medical Fallback Generator
+    return `### 🌐 Human Physiology & Anatomical Overview\n\nThe human body operates as a highly coordinated biological ecosystem where 11 distinct organ systems interact to maintain physiological homeostasis for query "${query}":\n\n- **Structural & Locomotive:** Musculoskeletal framework (206 bones, 600+ muscles) provides mechanical support and kinetic force.\n- **Circulatory & Respiratory:** Cardiovascular and respiratory circuits supply continuous oxygenated perfusion across tissues.\n- **Control & Communication:** Nervous and endocrine systems orchestrate autonomic feedback and hormonal balance.\n\n💡 **Interactive Tip:** Click any bone or organ directly in the 3D viewport to inspect its anatomy, or open the **AI Health Advisor** in the top navigation bar to evaluate vitals and local air quality!`;
   };
 
 
@@ -294,13 +355,13 @@ export default function ChatbotWidget() {
 
     let answered = false;
 
-    // Send question with paragraph instruction to FastAPI ask-stream endpoint
+    // Send question with structured prompt to FastAPI ask-stream endpoint
     try {
       const res = await fetch(`${DEFAULT_API_URL}/ask-stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          question: `${text}\n\n(Please structure your response in clear, flowing prose paragraphs. Do not use bullet points or numbered lists.)`,
+          question: `${text}\n\n(Provide a clear, engaging, and well-structured response with key anatomical highlights, bullet points, numerals for metrics, and clinical/interactive insights where helpful.)`,
         }),
       });
 
