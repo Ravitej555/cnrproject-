@@ -11,6 +11,7 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 import ChatbotWidget from './components/ChatbotWidget';
+import FossilGallery from './components/FossilGallery';
 
 
 // --- ANIMATION VARIANTS ---
@@ -76,7 +77,6 @@ export default function App() {
     { label: "3D Anatomy", href: `${BASE}anatomy.html` },
     { label: "AI Advisor", href: `${BASE}anatomy.html?openAdvisor=true` },
     { label: "Capabilities", href: "#capabilities" },
-    { label: "System Flow", href: "#system-flow" },
   ];
 
   return (
@@ -438,15 +438,15 @@ export default function App() {
           className="flex flex-wrap justify-center gap-3 md:gap-4 mt-12 mb-10 md:mb-24 px-6"
         >
           {[
-            { label: "AQI Analysis", icon: Leaf, href: "/anatomy.html" },
-            { label: "AI Risk Engine", icon: Dna, href: "/anatomy.html" },
-            { label: "Explainable AI", icon: BookOpen, href: "/anatomy.html" },
-            { label: "Symptom Mapping", icon: Gem, href: "/anatomy.html" },
-            { label: "3D Human Anatomy", icon: Bone, href: "/anatomy.html" },
+            { label: "AQI Analysis", icon: Leaf, href: `${BASE}anatomy.html` },
+            { label: "AI Risk Engine", icon: Dna, href: `${BASE}anatomy.html` },
+            { label: "Explainable AI", icon: BookOpen, href: `${BASE}anatomy.html` },
+            { label: "Symptom Mapping", icon: Gem, href: `${BASE}anatomy.html` },
+            { label: "3D Human Anatomy", icon: Bone, href: `${BASE}anatomy.html` },
           ].map(({ label, icon: Icon, href }) => (
             <a
               key={label}
-              href={href || "/anatomy.html"}
+              href={href || `${BASE}anatomy.html`}
               title="Open 3D Simulator"
               className="rounded-full border border-gray-300 px-5 py-2.5 text-[11px] font-medium uppercase tracking-wider bg-white/50 backdrop-blur-sm text-gray-800 transition-all duration-300 hover:border-black hover:bg-black hover:text-white flex items-center gap-2 cursor-pointer shadow-sm text-decoration-none"
             >
@@ -456,8 +456,10 @@ export default function App() {
           ))}
         </motion.div>
 
-        {/* 2D. SPACER */}
-        <div className="min-h-[220px] md:min-h-[450px] w-full" />
+        {/* 2D. PREHISTORIC SPECIMENS & DINOSAURS EXHIBIT */}
+        <div className="w-full pb-20 z-10">
+          <FossilGallery />
+        </div>
 
         {/* 2E. BOTTOM TEXT */}
         <div className="absolute bottom-0 left-0 w-full px-8 md:px-16 pb-8 md:pb-12 pointer-events-none flex justify-between items-center">
@@ -472,128 +474,14 @@ export default function App() {
 
 
       {/* ========================================================
-          SECTION 3: AQI → HEALTH → 3D PATHWAY (Dark Section)
+          FOOTER
       ======================================================== */}
-      <section id="system-flow" className="relative w-full bg-[#0a0a0a] text-white flex flex-col z-30">
-        {/* 3B. HEADING AREA */}
-        <div className="px-8 md:px-16 pt-20 md:pt-32 mb-16 z-10 flex flex-col xl:flex-row justify-between items-start gap-8">
-          {/* Main heading */}
-          <h2 className="text-[1.8rem] md:text-[3rem] lg:text-[3.8rem] xl:text-[4rem] leading-[1.15] font-medium tracking-tight text-white max-w-[850px]">
-            From air pollution{" "}
-            <span className="inline-flex gap-2 md:gap-3 align-middle mx-2 md:mx-4 translate-y-[-4px]">
-              <span className="w-10 h-10 md:w-14 md:h-14 rounded-full border border-gray-600 bg-black text-gray-400 flex items-center justify-center transition-colors duration-300 hover:bg-white hover:text-black hover:border-white cursor-pointer text-lg">
-                🌫️
-              </span>
-              <span className="w-10 h-10 md:w-14 md:h-14 rounded-full border border-gray-600 bg-black text-gray-400 flex items-center justify-center transition-colors duration-300 hover:bg-white hover:text-black hover:border-white cursor-pointer text-lg">
-                🫁
-              </span>
-              <span className="w-10 h-10 md:w-14 md:h-14 rounded-full border border-gray-600 bg-black text-gray-400 flex items-center justify-center transition-colors duration-300 hover:bg-white hover:text-black hover:border-white cursor-pointer text-lg">
-                🧬
-              </span>
-            </span>{" "}
-            to 3D organ risk visualization.
-          </h2>
-
-          {/* Right -- Tagline + pills */}
-          <div className="xl:text-right">
-            <div className="text-[9px] md:text-[10px] font-mono tracking-widest text-gray-400 uppercase mb-6 leading-relaxed">
-              AQI × PM2.5 × VITALS
-              <br />
-              → ORGAN IMPACT → 3D ATLAS
-            </div>
-            <div className="flex flex-wrap gap-2 xl:justify-end">
-              {["Explainable", "Educational", "Evidence-based"].map((pill) => (
-                <span
-                  key={pill}
-                  className="px-5 py-2 rounded-full border border-gray-600 text-[9px] font-mono tracking-widest uppercase text-gray-300 transition-colors duration-300 hover:bg-white hover:text-black hover:border-white cursor-pointer inline-flex items-center justify-center"
-                >
-                  {pill}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* 3C. TWO-COLUMN PANEL: Pathway + Features */}
-        <div className="h-[1px] bg-gray-800" />
-        <div className="flex flex-col md:flex-row w-full z-10">
-          {/* Left panel — AQI Flow */}
-          <div className="w-full md:w-[35%] border-r border-gray-800 border-b md:border-b-0 min-h-[400px] md:min-h-[500px] relative flex flex-col justify-between p-8 overflow-hidden">
-            <div className="text-gray-500 text-xl tracking-[0.3em] font-mono">***</div>
-
-            {/* Pathway visualization */}
-            <div className="relative w-full flex-1 flex flex-col items-center justify-center gap-3 my-6">
-              {[
-                { label: "AIR QUALITY (AQI)", color: "#60a5fa" },
-                { label: "PM2.5 / POLLUTANTS", color: "#a78bfa" },
-                { label: "RISK ASSESSMENT", color: "#f59e0b" },
-                { label: "AFFECTED ORGAN", color: "#f97316" },
-                { label: "3D VISUALIZATION", color: "#10b981" },
-              ].map((step, i) => (
-                <div key={step.label} className="flex flex-col items-center gap-1 w-full">
-                  <div
-                    className="px-4 py-2 rounded-md text-[10px] font-mono tracking-widest font-bold w-full text-center"
-                    style={{ background: step.color + '18', color: step.color, border: `1px solid ${step.color}44` }}
-                  >
-                    {step.label}
-                  </div>
-                  {i < 4 && <div className="text-gray-600 text-sm">↓</div>}
-                </div>
-              ))}
-            </div>
-
-            <div className="text-[10px] font-mono tracking-widest text-[#888] uppercase">
-              Core Technical Flow
-            </div>
-          </div>
-
-          {/* Right panel — Feature list */}
-          <div className="w-full md:w-[65%] flex flex-col">
-            {/* Top bar */}
-            <div className="border-b border-gray-800 p-8 text-[10px] font-mono text-gray-400 tracking-widest flex justify-between items-center">
-              <span>Transparent AI — No black-box decisions.</span>
-              <span className="text-white">5 Demo Scenarios</span>
-            </div>
-
-            {/* Feature list */}
-            <div>
-              {[
-                { name: "Respiratory Risk via AQI", desc: "High PM2.5 / AQI → Lung highlight in 3D" },
-                { name: "Cardiovascular Assessment", desc: "Elevated BP + palpitations → Heart focus" },
-                { name: "Explainable Factor Breakdown", desc: "Vitals 35% · Symptoms 30% · AQI 25% · Lifestyle 10%" },
-                { name: "Neurological Mapping", desc: "Dizziness / headache → Brain region focus" },
-                { name: "Renal & Digestive Routing", desc: "Flank pain → Kidneys · Nausea → Stomach" },
-              ].map((feature, idx) => {
-                return (
-                  <div
-                    key={feature.name}
-                    className="border-b border-gray-800/80 py-8 px-8 cursor-default transition-colors duration-300 flex justify-between items-center group hover:bg-white/5"
-                  >
-                    <div>
-                      <span className="text-xl md:text-[1.6rem] font-medium tracking-tight text-white block">
-                        {feature.name}
-                      </span>
-                      <span className="text-[11px] font-mono text-gray-500 tracking-wide mt-1 block">
-                        {feature.desc}
-                      </span>
-                    </div>
-                    <ArrowUpRight size={22} strokeWidth={1} className="text-gray-700 group-hover:text-gray-300 transition-colors" />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* 3D. BOTTOM FOOTER */}
-        <div className="h-[1px] bg-gray-800" />
-        <div className="px-8 py-8 text-[10px] font-mono tracking-widest text-gray-500 uppercase bg-[#0a0a0a] flex justify-between items-center">
-          <span>SMART HEALTH ADVISORY SYSTEM — COLLEGE PROJECT 2026</span>
-          <a href={`${BASE}anatomy.html`} className="text-gray-400 hover:text-white transition-colors no-underline">
-            LAUNCH 3D ADVISOR ↗
-          </a>
-        </div>
-      </section>
+      <footer className="w-full border-t border-gray-200 bg-[#f8f9fa] px-8 py-8 text-[10px] font-mono tracking-widest text-gray-500 uppercase flex flex-col sm:flex-row justify-between items-center gap-4 z-20">
+        <span>SMART HEALTH ADVISORY SYSTEM — COLLEGE PROJECT 2026</span>
+        <a href={`${BASE}anatomy.html`} className="text-gray-600 hover:text-black transition-colors no-underline">
+          LAUNCH 3D ADVISOR ↗
+        </a>
+      </footer>
 
 
       {/* Floating AI Chatbot Assistant */}
