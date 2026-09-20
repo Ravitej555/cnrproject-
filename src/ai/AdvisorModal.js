@@ -4,6 +4,7 @@
 import { DEMO_SCENARIOS, runHealthAdvisor } from './healthAdvisor.js';
 import { SYMPTOM_DEFINITIONS, getAqiCategory } from './healthRules.js';
 import { saveAssessmentToHistory } from './historyService.js';
+import { fetchCityAqi } from './aqiService.js';
 
 export function renderHealthAdvisorDialog() {
   const presetButtons = DEMO_SCENARIOS.map(s => `
@@ -76,26 +77,45 @@ export function renderHealthAdvisorDialog() {
             </div>
           </div>
 
-          <!-- Environment -->
-          <div class="dash-card">
+          <!-- Environment / AQI with City Search -->
+          <div class="dash-card" id="adv-aqi-card">
             <div class="dash-card-head">
-              <span class="dash-card-icon green">🌍</span>
+              <span class="dash-card-icon green">&#127757;</span>
               <span class="dash-card-title">Air Quality (AQI)</span>
-              <span id="adv-aqi-badge" class="aqi-badge" style="margin-left:auto;background:rgba(16,185,129,.15);color:#10b981;border-color:#10b981">AQI 45 · Good</span>
+              <span id="adv-aqi-badge" class="aqi-badge" style="margin-left:auto;background:rgba(16,185,129,.15);color:#10b981;border-color:#10b981">AQI 45 &#183; Good</span>
             </div>
+
+            <!-- City Search Row -->
+            <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
+              <input type="text" id="adv-city-input"
+                placeholder="&#128269; Search city (e.g. Bengaluru, Delhi...)"
+                autocomplete="off" spellcheck="false"
+                style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#e2e8f0;font-size:11px;padding:6px 10px;outline:none;font-family:inherit"
+              >
+              <button type="button" id="adv-city-search-btn"
+                style="padding:6px 12px;background:linear-gradient(135deg,#0ea5e9,#6366f1);border:none;border-radius:6px;color:#fff;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;letter-spacing:.4px"
+              >Fetch AQI</button>
+            </div>
+
+            <!-- City Status Panel (hidden by default) -->
+            <div id="adv-city-status" style="display:none;margin-bottom:8px;border-radius:7px;padding:8px 10px;font-size:9.5px;line-height:1.55"></div>
+
+            <!-- AQI Display + Slider -->
             <div class="dash-aqi-row-compact">
               <div class="dash-aqi-num-block">
                 <span class="dash-aqi-big" id="adv-aqi-num">45</span>
                 <small>AQI</small>
               </div>
               <div style="flex:1">
+                <div id="adv-aqi-mode-tag" style="font-size:8px;color:#475569;margin-bottom:3px">&#9999;&#65039; Manual — or search a city above for live data</div>
                 <input type="range" id="adv-aqi-slider" min="10" max="450" value="45" step="5" class="adv-range-slider" style="width:100%;accent-color:#00e5ff">
                 <div class="dash-pollutants-compact">
                   <span>PM2.5 <b id="adv-pm25-val">12</b></span>
                   <span>PM10 <b id="adv-pm10-val">25</b></span>
                   <span>CO <b id="adv-co-val">0.5</b></span>
-                  <span>NO₂ <b id="adv-no2-val">18</b></span>
-                  <span>O₃ <b id="adv-o3-val">22</b></span>
+                  <span>NO&#8322; <b id="adv-no2-val">18</b></span>
+                  <span>O&#8323; <b id="adv-o3-val">22</b></span>
+                  <span>SO&#8322; <b id="adv-so2-val">5</b></span>
                 </div>
               </div>
             </div>
@@ -316,19 +336,29 @@ export function setupAdvisorInteractions(root, onHighlightOrgan) {
   });
 
   const aqiSlider = root.querySelector('#adv-aqi-slider');
-  const aqiNum = root.querySelector('#adv-aqi-num');
-  const aqiBadge = root.querySelector('#adv-aqi-badge');
-  const pm25Val = root.querySelector('#adv-pm25-val');
-  const pm10Val = root.querySelector('#adv-pm10-val');
-  const coVal = root.querySelector('#adv-co-val');
-  const no2Val = root.querySelector('#adv-no2-val');
-  const o3Val = root.querySelector('#adv-o3-val');
-  const symptomBtns = root.querySelectorAll('.dash-sym-btn');
-  const runBtn = root.querySelector('#adv-run-assessment-btn');
-  const resultsBox = root.querySelector('#adv-results-box');
-  const presetBtns = root.querySelectorAll('.dash-preset-btn');
-  const symCountBadge = root.querySelector('#dash-sym-count');
+  const aqiNum    = root.querySelector('#adv-aqi-num');
+  const aqiBadge  = root.querySelector('#adv-aqi-badge');
+  const pm25Val   = root.querySelector('#adv-pm25-val');
+  const pm10Val   = root.querySelector('#adv-pm10-val');
+  const coVal     = root.querySelector('#adv-co-val');
+  const no2Val    = root.querySelector('#adv-no2-val');
+  const o3Val     = root.querySelector('#adv-o3-val');
+  const so2Val    = root.querySelector('#adv-so2-val');
+  const symptomBtns    = root.querySelectorAll('.dash-sym-btn');
+  const runBtn         = root.querySelector('#adv-run-assessment-btn');
+  const resultsBox     = root.querySelector('#adv-results-box');
+  const presetBtns     = root.querySelectorAll('.dash-preset-btn');
+  const symCountBadge  = root.querySelector('#dash-sym-count');
+  const cityInput      = root.querySelector('#adv-city-input');
+  const citySearchBtn  = root.querySelector('#adv-city-search-btn');
+  const cityStatus     = root.querySelector('#adv-city-status');
+  const aqiModeTag     = root.querySelector('#adv-aqi-mode-tag');
   let selectedSymptoms = new Set();
+
+  // ── Live AQI data from city search ────────────────────────────────
+  // When set, the slider still moves but pollutant values are locked to API data.
+  // Manually dragging the slider clears this and reverts to estimated values.
+  let liveAqiData = null;
 
   // ── Live chip updaters ────────────────────────────────────────────
   function updateChips() {
@@ -376,22 +406,167 @@ export function setupAdvisorInteractions(root, onHighlightOrgan) {
   updateChips();
 
   // ── AQI slider ────────────────────────────────────────────────────
+  // Dragging the slider manually clears live city data (user is overriding).
   aqiSlider?.addEventListener('input', () => {
     const val = +aqiSlider.value;
     if (aqiNum) aqiNum.textContent = val;
     const cat = getAqiCategory(val);
     if (aqiBadge) {
-      aqiBadge.textContent = `AQI ${val} · ${cat.tier}`;
+      aqiBadge.textContent = `AQI ${val} \u00b7 ${cat.tier}`;
       aqiBadge.style.background = cat.color + '22';
       aqiBadge.style.color = cat.color;
       aqiBadge.style.borderColor = cat.color + '66';
     }
-    if (pm25Val) pm25Val.textContent = Math.round(val * 0.55);
-    if (pm10Val) pm10Val.textContent = Math.round(val * 0.85);
-    if (coVal) coVal.textContent = (val * 0.008).toFixed(1);
-    if (no2Val) no2Val.textContent = Math.round(val * 0.22);
-    if (o3Val) o3Val.textContent = Math.round(val * 0.18);
+    // Only recalculate estimated pollutant values when NOT locked to live data.
+    // If liveAqiData is set, the slider still moves (AQI overridden) but
+    // pollutant fields keep the real API values until the user manually changes them.
+    if (!liveAqiData) {
+      if (pm25Val) pm25Val.textContent = Math.round(val * 0.55);
+      if (pm10Val) pm10Val.textContent = Math.round(val * 0.85);
+      if (coVal)   coVal.textContent   = (val * 0.008).toFixed(1);
+      if (no2Val)  no2Val.textContent  = Math.round(val * 0.22);
+      if (o3Val)   o3Val.textContent   = Math.round(val * 0.18);
+      if (so2Val)  so2Val.textContent  = Math.round(val * 0.05) || 5;
+    } else {
+      // User is manually overriding AQI while city data exists — show override notice
+      if (aqiModeTag) {
+        aqiModeTag.textContent = `\u26A0\uFE0F Manual override \u2014 AQI ${val}. City data still active for other pollutants.`;
+        aqiModeTag.style.color = '#f59e0b';
+      }
+    }
     updateChips();
+  });
+
+  // ── City AQI Search ───────────────────────────────────────────────
+  function setStatusLoading() {
+    if (!cityStatus) return;
+    cityStatus.style.display = 'block';
+    cityStatus.style.background = 'rgba(99,102,241,0.1)';
+    cityStatus.style.border = '1px solid rgba(99,102,241,0.3)';
+    cityStatus.style.color = '#a5b4fc';
+    cityStatus.innerHTML = '&#9203; Fetching air quality data\u2026';
+  }
+
+  function setStatusError(msg) {
+    if (!cityStatus) return;
+    cityStatus.style.display = 'block';
+    cityStatus.style.background = 'rgba(239,68,68,0.08)';
+    cityStatus.style.border = '1px solid rgba(239,68,68,0.25)';
+    cityStatus.style.color = '#fca5a5';
+    cityStatus.innerHTML = `&#10060; ${msg}`;
+  }
+
+  function setStatusSuccess(data) {
+    if (!cityStatus) return;
+    const cat = getAqiCategory(data.aqi);
+    const domPol = data.dominantPollutant
+      ? ` &middot; Dominant: <b>${data.dominantPollutant.toUpperCase()}</b>` : '';
+    const so2row = data.so2 != null
+      ? `<span>SO&#8322; <b>${data.so2}</b></span>` : '';
+    cityStatus.style.display = 'block';
+    cityStatus.style.background = `${cat.color}11`;
+    cityStatus.style.border = `1px solid ${cat.color}33`;
+    cityStatus.style.color = '#e2e8f0';
+    cityStatus.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+        <span style="font-size:14px">&#127757;</span>
+        <span style="font-weight:700;color:${cat.color};font-size:11px">${data.cityRaw}</span>
+        <span style="margin-left:auto;background:${cat.color}22;color:${cat.color};border:1px solid ${cat.color}55;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700">${data.aqi} &middot; ${cat.tier}</span>
+      </div>
+      <div style="font-size:9px;color:#64748b;margin-bottom:6px">
+        AQI source: <a href="${data.sourceUrl}" target="_blank" rel="noopener" style="color:#6366f1;text-decoration:none">${data.source}</a>${domPol}
+      </div>
+      <div style="font-size:9px;color:#64748b;margin-bottom:5px">
+        Last updated: <b style="color:#94a3b8">${data.lastUpdated}</b>
+        &nbsp;&#183;&nbsp; <span style="color:#fbbf24;font-size:8.5px">&#9679; May be 1&#8211;3h delayed depending on station</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:9px;color:#94a3b8">
+        ${data.pm25 != null ? `<span>PM2.5 <b>${data.pm25}</b></span>` : ''}
+        ${data.pm10 != null ? `<span>PM10 <b>${data.pm10}</b></span>` : ''}
+        ${data.co   != null ? `<span>CO <b>${data.co}</b></span>` : ''}
+        ${data.no2  != null ? `<span>NO&#8322; <b>${data.no2}</b></span>` : ''}
+        ${data.o3   != null ? `<span>O&#8323; <b>${data.o3}</b></span>` : ''}
+        ${so2row}
+      </div>`;
+  }
+
+  function applyLiveAqiData(data) {
+    liveAqiData = data;
+    const cat = getAqiCategory(data.aqi);
+
+    // Update slider position
+    if (aqiSlider) {
+      const clamped = Math.min(450, Math.max(10, data.aqi));
+      aqiSlider.value = clamped;
+    }
+    // Update AQI number and badge
+    if (aqiNum) aqiNum.textContent = data.aqi;
+    if (aqiBadge) {
+      aqiBadge.textContent = `AQI ${data.aqi} \u00b7 ${cat.tier}`;
+      aqiBadge.style.background = cat.color + '22';
+      aqiBadge.style.color      = cat.color;
+      aqiBadge.style.borderColor = cat.color + '55';
+    }
+    // Update pollutant values from API (real values, not estimates)
+    // Any null value falls back to an estimate from the AQI
+    const aqi = data.aqi;
+    if (pm25Val) pm25Val.textContent = data.pm25 ?? Math.round(aqi * 0.55);
+    if (pm10Val) pm10Val.textContent = data.pm10 ?? Math.round(aqi * 0.85);
+    if (coVal)   coVal.textContent   = data.co   ?? (aqi * 0.008).toFixed(1);
+    if (no2Val)  no2Val.textContent  = data.no2  ?? Math.round(aqi * 0.22);
+    if (o3Val)   o3Val.textContent   = data.o3   ?? Math.round(aqi * 0.18);
+    if (so2Val)  so2Val.textContent  = (data.so2  ?? Math.round(aqi * 0.05)) || 5;
+
+    // Update the AQI chip in header
+    const sumAqi = root.querySelector('#sum-aqi-val');
+    if (sumAqi) sumAqi.textContent = data.aqi;
+    const chipAqi = root.querySelector('#chip-aqi');
+    if (chipAqi) chipAqi.style.borderColor = cat.color + '66';
+
+    // Mode label
+    if (aqiModeTag) {
+      aqiModeTag.style.color = '#10b981';
+      aqiModeTag.innerHTML =
+        `&#9679; Live city data \u2014 ${data.cityRaw} &middot; Move slider to override`;
+    }
+  }
+
+  async function doSearch() {
+    const query = cityInput?.value?.trim();
+    if (!query) { setStatusError('Please enter a city name.'); return; }
+
+    if (citySearchBtn) {
+      citySearchBtn.disabled = true;
+      citySearchBtn.textContent = '\u23F3 Fetching\u2026';
+    }
+    setStatusLoading();
+
+    try {
+      const data = await fetchCityAqi(query);
+      applyLiveAqiData(data);
+      setStatusSuccess(data);
+    } catch (err) {
+      liveAqiData = null;
+      if (aqiModeTag) {
+        aqiModeTag.textContent = '\u270F\uFE0F Manual \u2014 or search a city above for live data';
+        aqiModeTag.style.color = '#475569';
+      }
+      setStatusError(err.message || 'Failed to fetch air quality data.');
+    } finally {
+      if (citySearchBtn) {
+        citySearchBtn.disabled = false;
+        citySearchBtn.textContent = 'Fetch AQI';
+      }
+    }
+  }
+
+  citySearchBtn?.addEventListener('click', doSearch);
+  cityInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
+  // When user types in city input again, clear error state
+  cityInput?.addEventListener('input', () => {
+    if (cityStatus && cityStatus.style.color === 'rgb(252, 165, 165)') {
+      cityStatus.style.display = 'none';
+    }
   });
 
   // ── Symptoms ──────────────────────────────────────────────────────
@@ -408,7 +583,7 @@ export function setupAdvisorInteractions(root, onHighlightOrgan) {
     });
   });
 
-  // ── Presets ───────────────────────────────────────────────────────
+  // Preset loading clears live city data so slider re-takes control
   presetBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const scenario = DEMO_SCENARIOS.find(s => s.id === btn.dataset.presetId);
@@ -425,6 +600,10 @@ export function setupAdvisorInteractions(root, onHighlightOrgan) {
       root.querySelector('#adv-dia').value = v.diastolicBP;
       root.querySelector('#adv-rr').value = v.respiratoryRate;
       root.querySelector('#adv-temp').value = v.bodyTemp;
+      // Clear live city data when loading a preset
+      liveAqiData = null;
+      if (aqiModeTag) { aqiModeTag.textContent = '\u270F\uFE0F Manual \u2014 preset loaded'; aqiModeTag.style.color = '#475569'; }
+      if (cityStatus) cityStatus.style.display = 'none';
       if (aqiSlider) { aqiSlider.value = e.aqi; aqiSlider.dispatchEvent(new Event('input')); }
       root.querySelector('#adv-smoking').value = l.smoking;
       root.querySelector('#adv-exercise').value = l.exercise;
@@ -442,22 +621,36 @@ export function setupAdvisorInteractions(root, onHighlightOrgan) {
     });
   });
 
-  // ── Run ───────────────────────────────────────────────────────────
+  // ── Run Assessment ─────────────────────────────────────────────────
   function runAssessment() {
+    // Use live AQI pollutant values when available;
+    // otherwise read from DOM (estimated from slider or preset)
+    const so2Live = (liveAqiData?.so2 ?? +so2Val?.textContent) || 5;
+
     const payload = {
       demographics: { age: +root.querySelector('#adv-age').value||30, gender: root.querySelector('#adv-gender').value,
         height: +root.querySelector('#adv-height')?.value||175, weight: +root.querySelector('#adv-weight')?.value||70 },
       vitals: { heartRate: +root.querySelector('#adv-hr').value||75, spo2: +root.querySelector('#adv-spo2').value||98,
         systolicBP: +root.querySelector('#adv-sys').value||120, diastolicBP: +root.querySelector('#adv-dia').value||80,
         respiratoryRate: +root.querySelector('#adv-rr').value||16, bodyTemp: +root.querySelector('#adv-temp').value||36.8 },
-      environmental: { aqi: +aqiSlider.value||45, pm25: +pm25Val?.textContent||12,
-        pm10: +pm10Val?.textContent||25, co: +coVal?.textContent||0.5,
-        no2: +no2Val?.textContent||18, so2: 5, o3: +o3Val?.textContent||22 },
+      environmental: {
+        aqi:  +aqiSlider.value||45,
+        pm25: +pm25Val?.textContent||12,
+        pm10: +pm10Val?.textContent||25,
+        co:   +coVal?.textContent||0.5,
+        no2:  +no2Val?.textContent||18,
+        so2:  so2Live,
+        o3:   +o3Val?.textContent||22
+      },
       lifestyle: { smoking: root.querySelector('#adv-smoking').value,
         exercise: root.querySelector('#adv-exercise').value,
         sleep: +root.querySelector('#adv-sleep').value||7.5, water: +root.querySelector('#adv-water').value||2.5 },
       symptoms: Array.from(selectedSymptoms)
     };
+    // Attach data-source label to payload for display
+    payload.aqiSource = liveAqiData
+      ? { city: liveAqiData.cityRaw, source: liveAqiData.source, lastUpdated: liveAqiData.lastUpdated, isLive: true }
+      : { city: null, source: 'Manual input', lastUpdated: null, isLive: false };
 
     if (runBtn) { runBtn.disabled = true; runBtn.textContent = '⏳ Analyzing…'; }
 

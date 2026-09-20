@@ -3,3 +3,7 @@ dist/
 .DS_Store
 *.local
 *.tsbuildinfo
+
+# Local env (API keys) — DO NOT COMMIT
+.env
+.env.local
