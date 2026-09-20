@@ -653,32 +653,39 @@ export function setupAdvisorInteractions(root, onHighlightOrgan) {
     if (runBtn) { runBtn.disabled = true; runBtn.textContent = '⏳ Analyzing…'; }
 
     setTimeout(() => {
-      const result = runHealthAdvisor(payload);
-      if (resultsBox) resultsBox.innerHTML = renderAssessmentResults(result);
-      saveAssessmentToHistory({ ...result, payload });
+      try {
+        const result = runHealthAdvisor(payload);
+        if (resultsBox) resultsBox.innerHTML = renderAssessmentResults(result);
+        saveAssessmentToHistory({ ...result, payload });
 
-      // Update risk chip
-      const riskVal = root.querySelector('#sum-risk-val');
-      if (riskVal) { riskVal.textContent = result.score; riskVal.style.color = result.color; }
-      const riskChip = root.querySelector('#chip-risk');
-      if (riskChip) riskChip.style.borderColor = result.color + '66';
+        // Update risk chip
+        const riskVal = root.querySelector('#sum-risk-val');
+        if (riskVal) { riskVal.textContent = result.score; riskVal.style.color = result.color; }
+        const riskChip = root.querySelector('#chip-risk');
+        if (riskChip) riskChip.style.borderColor = result.color + '66';
 
-      // Update live badge
-      const liveText = root.querySelector('#dash-live-text');
-      const liveDot = root.querySelector('.dash-live-dot');
-      if (liveText) { liveText.textContent = result.level; liveText.style.color = result.color; }
-      if (liveDot) { liveDot.style.background = result.color; liveDot.style.boxShadow = `0 0 6px ${result.color}`; }
+        // Update live badge
+        const liveText = root.querySelector('#dash-live-text');
+        const liveDot = root.querySelector('.dash-live-dot');
+        if (liveText) { liveText.textContent = result.level; liveText.style.color = result.color; }
+        if (liveDot) { liveDot.style.background = result.color; liveDot.style.boxShadow = `0 0 6px ${result.color}`; }
 
-      if (runBtn) { runBtn.disabled = false; runBtn.textContent = '⚡ Run Again'; }
-
-      const hlBtn = resultsBox?.querySelector('#adv-highlight-3d-btn');
-      if (hlBtn) {
-        hlBtn.addEventListener('click', () => {
-          dialog.close();
-          onHighlightOrgan?.({ organ: result.targetOrgan, region: result.targetRegion,
-            system: result.primarySystem, score: result.score, level: result.level,
-            systemName: result.systemMeta.name });
-        });
+        const hlBtn = resultsBox?.querySelector('#adv-highlight-3d-btn');
+        if (hlBtn) {
+          hlBtn.addEventListener('click', () => {
+            dialog.close();
+            onHighlightOrgan?.({ organ: result.targetOrgan, region: result.targetRegion,
+              system: result.primarySystem, score: result.score, level: result.level,
+              systemName: result.systemMeta.name });
+          });
+        }
+      } catch (err) {
+        console.error('Error running health assessment:', err);
+        if (resultsBox) {
+          resultsBox.innerHTML = `<div style="padding:16px;color:#fca5a5;background:rgba(239,68,68,0.1);border-radius:8px;font-size:11px">⚠️ Unable to generate assessment: ${err.message || 'Unknown error'}. Please verify inputs.</div>`;
+        }
+      } finally {
+        if (runBtn) { runBtn.disabled = false; runBtn.textContent = '⚡ Run Again'; }
       }
     }, 500);
   }
