@@ -83,6 +83,8 @@ The codebase is organized into four interconnected functional layers:
    * Renders the glassmorphism dashboard overlay with real-time biometric chip indicators, AQI sliders, symptom selectors, risk donuts, and 3D focus triggers.
 6. **`historyService.js`:**
    * Preserves historical assessment records in `localStorage` for longitudinal tracking.
+7. **`aqiService.js`:**
+   * Powers real-time city-based atmospheric intelligence via Open-Meteo & Copernicus CAMS without hardcoded values or API keys. Resolves user-searched cities to geographical coordinates and feeds live US EPA AQI, PM2.5, PM10, CO, NO₂, O₃, and SO₂ directly into the risk engine.
 
 ### D. AI Assistant Chatbot (`src/components/ChatbotWidget.tsx`, `anatomy.html`)
 * **Dual Runtime Engine:**
@@ -149,6 +151,7 @@ human-body-simulator-main/
     ├── overflow.css                # Viewport overflow & focus handling
     ├── ai/                         # AI Health Advisory Engine
     │   ├── AdvisorModal.js         # Interactive dashboard dialog & results UI
+    │   ├── aqiService.js           # Real-time city search & air quality API client (Open-Meteo & Copernicus CAMS)
     │   ├── healthAdvisor.js        # Demonstration scenarios & main runner
     │   ├── healthRules.js          # Clinical ranges, AQI tiers & systems
     │   ├── historyService.js       # LocalStorage assessment tracking
