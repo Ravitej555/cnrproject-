@@ -172,7 +172,7 @@ export function renderHealthAdvisorDialog() {
 export function renderAssessmentResults(assessment) {
   const { score, level, color, primarySystem, systemMeta, targetOrgan, targetRegion,
     aqiCategory, contributingFactors, vitalDeviations, recommendations, warningSigns,
-    advisoryText, disclaimer, systemMatrix, explainability, bmi } = assessment;
+    advisoryText, disclaimer, systemMatrix, explainability, bmi, aqiSource } = assessment;
 
   const circum = 2 * Math.PI * 32;
   const offset = circum * (1 - score / 100);
@@ -280,6 +280,7 @@ export function renderAssessmentResults(assessment) {
         <div class="dash-result-section">
           <div class="dash-sec-label">&#127757; Environment</div>
           <span class="dash-env-badge" style="background:${aqiCategory.color}22;color:${aqiCategory.color};border-color:${aqiCategory.color}55">AQI: ${aqiCategory.tier}</span>
+          ${aqiSource && aqiSource.city ? `<div style="font-size:9.5px;font-weight:600;color:#38bdf8;margin-top:5px">&#127757; ${aqiSource.city}</div>` : ''}
           <p style="font-size:9.5px;color:#94a3b8;margin:6px 0 0;line-height:1.4">${aqiCategory.desc}</p>
         </div>
         <div class="dash-result-section">
@@ -459,10 +460,8 @@ export function setupAdvisorInteractions(root, onHighlightOrgan) {
   function setStatusSuccess(data) {
     if (!cityStatus) return;
     const cat = getAqiCategory(data.aqi);
-    const domPol = data.dominantPollutant
-      ? ` &middot; Dominant: <b>${data.dominantPollutant.toUpperCase()}</b>` : '';
     const so2row = data.so2 != null
-      ? `<span>SO&#8322; <b>${data.so2}</b></span>` : '';
+      ? `<span>SO&#8322; <b>${data.so2}</b> <small style="opacity:.6">µg/m³</small></span>` : '';
     cityStatus.style.display = 'block';
     cityStatus.style.background = `${cat.color}11`;
     cityStatus.style.border = `1px solid ${cat.color}33`;
@@ -474,18 +473,17 @@ export function setupAdvisorInteractions(root, onHighlightOrgan) {
         <span style="margin-left:auto;background:${cat.color}22;color:${cat.color};border:1px solid ${cat.color}55;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700">${data.aqi} &middot; ${cat.tier}</span>
       </div>
       <div style="font-size:9px;color:#64748b;margin-bottom:6px">
-        AQI source: <a href="${data.sourceUrl}" target="_blank" rel="noopener" style="color:#6366f1;text-decoration:none">${data.source}</a>${domPol}
+        Data Source: <a href="${data.sourceUrl}" target="_blank" rel="noopener" style="color:#6366f1;text-decoration:none">${data.source}</a>
       </div>
       <div style="font-size:9px;color:#64748b;margin-bottom:5px">
         Last updated: <b style="color:#94a3b8">${data.lastUpdated}</b>
-        &nbsp;&#183;&nbsp; <span style="color:#fbbf24;font-size:8.5px">&#9679; May be 1&#8211;3h delayed depending on station</span>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:9px;color:#94a3b8">
-        ${data.pm25 != null ? `<span>PM2.5 <b>${data.pm25}</b></span>` : ''}
-        ${data.pm10 != null ? `<span>PM10 <b>${data.pm10}</b></span>` : ''}
-        ${data.co   != null ? `<span>CO <b>${data.co}</b></span>` : ''}
-        ${data.no2  != null ? `<span>NO&#8322; <b>${data.no2}</b></span>` : ''}
-        ${data.o3   != null ? `<span>O&#8323; <b>${data.o3}</b></span>` : ''}
+        ${data.pm25 != null ? `<span>PM2.5 <b>${data.pm25}</b> <small style="opacity:.6">µg/m³</small></span>` : ''}
+        ${data.pm10 != null ? `<span>PM10 <b>${data.pm10}</b> <small style="opacity:.6">µg/m³</small></span>` : ''}
+        ${data.co   != null ? `<span>CO <b>${data.co}</b> <small style="opacity:.6">mg/m³</small></span>` : ''}
+        ${data.no2  != null ? `<span>NO&#8322; <b>${data.no2}</b> <small style="opacity:.6">µg/m³</small></span>` : ''}
+        ${data.o3   != null ? `<span>O&#8323; <b>${data.o3}</b> <small style="opacity:.6">µg/m³</small></span>` : ''}
         ${so2row}
       </div>`;
   }
