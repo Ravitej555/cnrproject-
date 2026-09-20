@@ -1,0 +1,43 @@
+﻿{
+  "systems": {
+    "Skeleton": [
+      "Skull", "Spine", "Ribcage", "Pelvis",
+      "Femur", "Tibia", "Fibula", "Humerus",
+      "Radius", "Ulna", "HandBones", "FootBones"
+    ],
+    "Muscles": [
+      "PectoralisMajor", "RectusAbdominis", "BicepsBrachii",
+      "QuadricepsFemoris", "Trapezius", "Deltoid", "GluteusMaximus"
+    ],
+    "Circulatory": [
+      "Heart", "Aorta", "VenaCava", "CarotidArtery",
+      "JugularVein", "FemoralArtery", "FemoralVein"
+    ],
+    "Nervous": [
+      "Brain", "SpinalCord", "CranialNerves",
+      "SpinalNerves", "PeripheralNerves"
+    ],
+    "Respiratory": [
+      "Lungs", "Trachea", "Bronchi", "Diaphragm"
+    ],
+    "Digestive": [
+      "Esophagus", "Stomach", "SmallIntestine",
+      "LargeIntestine", "Liver", "Pancreas"
+    ],
+    "Endocrine": [
+      "PituitaryGland", "ThyroidGland", "AdrenalGlands", "PancreasGland"
+    ],
+    "Urinary": [
+      "Kidneys", "Ureters", "Bladder", "Urethra"
+    ]
+  },
+  "regions": {
+    "Head": ["Skull", "Brain", "CranialNerves"],
+    "Chest": ["Ribcage", "Heart", "Lungs", "PectoralisMajor"],
+    "Abdomen": ["Pelvis", "Stomach", "Intestines", "Liver", "Kidneys", "RectusAbdominis"],
+    "LArm": ["Humerus", "Radius", "Ulna", "BicepsBrachii", "Deltoid"],
+    "RArm": ["Humerus", "Radius", "Ulna", "BicepsBrachii", "Deltoid", "Trapezius"],
+    "LLeg": ["Femur", "Tibia", "Fibula", "QuadricepsFemoris"],
+    "RLeg": ["Femur", "Tibia", "Fibula", "GluteusMaximus", "QuadricepsFemoris"]
+  }
+}

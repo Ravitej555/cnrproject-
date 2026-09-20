@@ -1,0 +1,9 @@
+Creative Commons Attribution-ShareAlike 2.1 Japan
+
+The official, authoritative legal code is published by Creative Commons at:
+https://creativecommons.org/licenses/by-sa/2.1/jp/legalcode
+
+An exact downloaded copy of that official Japanese legalcode page is deployed
+beside this notice as /licenses/CC-BY-SA-2.1-JP-legalcode.html.
+
+Creative Commons is not a law firm and does not provide legal services.
