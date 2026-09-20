@@ -45,15 +45,15 @@ export const SYMPTOM_DEFINITIONS = [
   { id: 'headache',            label: 'Headache / Migraine',          system: 'nervous',     organ: 'brain',   weight: 16, severity: 'moderate' },
   { id: 'dizziness',           label: 'Dizziness / Lightheadedness',  system: 'nervous',     organ: 'brain',   weight: 18, severity: 'moderate' },
   { id: 'mental_fog',          label: 'Mental Fog / Fatigue',         system: 'nervous',     organ: 'brain',   weight: 14, severity: 'low' },
-  { id: 'fever',               label: 'Fever / High Temperature',     system: 'nervous',     organ: 'brain',   weight: 20, severity: 'moderate' },
+  { id: 'fever',               label: 'Fever / High Temperature',     system: 'general',     organ: null,      weight: 20, severity: 'moderate' },
   // Digestive
   { id: 'stomach_pain',        label: 'Abdominal Pain / Cramping',    system: 'digestive',   organ: 'stomach', weight: 20, severity: 'moderate' },
   { id: 'nausea',              label: 'Nausea / Vomiting',            system: 'digestive',   organ: 'stomach', weight: 15, severity: 'low' },
   { id: 'acid_reflux',         label: 'Acid Reflux / Indigestion',    system: 'digestive',   organ: 'stomach', weight: 14, severity: 'low' },
   // Renal
   { id: 'flank_pain',          label: 'Flank / Lower Back Pain',      system: 'urinary',     organ: 'kidneys', weight: 22, severity: 'moderate' },
-  // General
-  { id: 'fatigue',             label: 'Severe Fatigue / Weakness',    system: 'nervous',     organ: 'brain',   weight: 15, severity: 'low' },
+  // General / Systemic (fatigue, muscle pain can span multiple systems)
+  { id: 'fatigue',             label: 'Severe Fatigue / Weakness',    system: 'general',     organ: null,      weight: 15, severity: 'low' },
   { id: 'muscle_weakness',     label: 'Muscle Pain / Joint Pain',     system: 'muscular',    organ: 'skeleton',weight: 16, severity: 'low' },
 ];
 
@@ -64,4 +64,5 @@ export const SYSTEM_DISPLAY_META = {
   digestive:   { name: 'Gastrointestinal System',  organ: 'stomach',  region: 'abdomen', color: '#e67e22', icon: '🧬', desc: 'Gastric acid motility, nutrient absorption & hepatic filtration. Affected by dehydration and lifestyle.' },
   urinary:     { name: 'Renal / Excretory System', organ: 'kidneys',  region: 'abdomen', color: '#8e44ad', icon: '🩸', desc: 'Nephron fluid balance, creatinine excretion & electrolyte regulation. Sensitive to dehydration and toxins.' },
   muscular:    { name: 'Musculoskeletal System',   organ: 'skeleton', region: 'chest',   color: '#c0392b', icon: '🦴', desc: 'Axial biomechanics, kinetic articulation & skeletal support. Joint pain may indicate systemic inflammation.' },
+  general:     { name: 'General & Systemic',       organ: 'heart',    region: 'chest',   color: '#10b981', icon: '💚', desc: 'No dominant system-specific risk identified from current inputs. Overall physiological parameters appear within broadly acceptable ranges.' },
 };

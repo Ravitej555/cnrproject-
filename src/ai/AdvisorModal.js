@@ -152,7 +152,7 @@ export function renderHealthAdvisorDialog() {
 export function renderAssessmentResults(assessment) {
   const { score, level, color, primarySystem, systemMeta, targetOrgan, targetRegion,
     aqiCategory, contributingFactors, vitalDeviations, recommendations, warningSigns,
-    advisoryText, disclaimer } = assessment;
+    advisoryText, disclaimer, systemMatrix, explainability, bmi } = assessment;
 
   const circum = 2 * Math.PI * 32;
   const offset = circum * (1 - score / 100);
@@ -170,6 +170,7 @@ export function renderAssessmentResults(assessment) {
     <div class="dash-factor-row">
       <div class="dash-factor-header"><span class="dash-factor-name">${f.name}</span><span class="dash-factor-pct" style="color:${f.color}">${f.weight}%</span></div>
       <div class="dash-factor-track"><div class="dash-factor-fill" style="width:${f.weight}%;background:${f.color};animation-delay:${i*0.07}s"></div></div>
+      ${f.note ? `<div style="font-size:8.5px;color:#64748b;margin-top:2px;line-height:1.3">${f.note}</div>` : ''}
     </div>`).join('');
 
   const obsHtml = vitalDeviations.length ? `<div class="dash-obs-tags">${vitalDeviations.map(o=>`<span class="dash-obs-tag">${o}</span>`).join('')}</div>` : '';
@@ -180,19 +181,22 @@ export function renderAssessmentResults(assessment) {
       <p style="font-size:10px;color:#fca5a5;line-height:1.55;margin:0">${warningSigns.join(' ')}</p>
     </div>` : '';
 
+  // System matrix — keyed to match engine output (circulatory, nervous, muscular)
+  // Display labels are user-friendly names; keys must match what riskEngine returns.
   const systems = [
-    {key:'cardiovascular',label:'Cardiovascular',icon:'❤️'},
-    {key:'respiratory',label:'Respiratory',icon:'🫁'},
-    {key:'neurological',label:'Neurological',icon:'🧠'},
-    {key:'musculoskeletal',label:'Musculoskeletal',icon:'🦴'},
-    {key:'digestive',label:'Digestive',icon:'🫄'},
-    {key:'endocrine',label:'Endocrine',icon:'🔬'},
+    { key: 'circulatory', label: 'Cardiovascular', icon: '❤️' },
+    { key: 'respiratory', label: 'Respiratory',    icon: '🫁' },
+    { key: 'nervous',     label: 'Neurological',   icon: '🧠' },
+    { key: 'muscular',    label: 'Musculoskeletal',icon: '🦴' },
+    { key: 'digestive',   label: 'Digestive',      icon: '🫄' },
+    { key: 'urinary',     label: 'Renal',          icon: '🩸' },
   ];
   const matrixHtml = systems.map(sys => {
-    let s = sys.key === primarySystem ? score : 10 + (Math.random()*22|0);
-    const c = s>=70?'#ef4444':s>=45?'#f59e0b':'#10b981';
+    // Use the computed systemMatrix score — zero randomness.
+    const s = (systemMatrix && systemMatrix[sys.key] != null) ? Math.round(systemMatrix[sys.key]) : 0;
+    const c = s >= 70 ? '#ef4444' : s >= 45 ? '#f59e0b' : '#10b981';
     const p = sys.key === primarySystem;
-    return `<div class="dash-matrix-row${p?' dash-matrix-primary':''}">
+    return `<div class="dash-matrix-row${p ? ' dash-matrix-primary' : ''}">
       <span>${sys.icon}</span><span class="dash-matrix-label">${sys.label}</span>
       <div class="dash-matrix-track"><div class="dash-matrix-fill" style="width:${s}%;background:${c}"></div></div>
       <span class="dash-matrix-score" style="color:${c}">${s}%</span>
@@ -236,21 +240,31 @@ export function renderAssessmentResults(assessment) {
 
       <!-- Factors -->
       <div class="dash-result-section">
-        <div class="dash-sec-label">🧠 Factor Attribution</div>
+        <div class="dash-sec-label">&#129504; Factor Attribution</div>
         <div class="dash-factors-list">${factorsHtml}</div>
       </div>
 
-      ${obsHtml ? `<div class="dash-result-section"><div class="dash-sec-label">⚠ Observations</div>${obsHtml}</div>` : ''}
+      ${obsHtml ? `<div class="dash-result-section"><div class="dash-sec-label">&#9888; Observations</div>${obsHtml}</div>` : ''}
+
+      <!-- Explainability: Why this result? -->
+      ${explainability ? `
+      <div class="dash-result-section" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:10px">
+        <div class="dash-sec-label" style="margin-bottom:6px">&#128161; Why This Result?</div>
+        <ul style="margin:0;padding:0 0 0 14px;list-style:disc;">
+          ${explainability.reasons.map(r => `<li style="font-size:9.5px;color:#94a3b8;margin-bottom:3px;line-height:1.45">${r}</li>`).join('')}
+        </ul>
+      </div>` : ''}
 
       <!-- Env + Matrix side by side -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="dash-result-section">
-          <div class="dash-sec-label">🌍 Environment</div>
+          <div class="dash-sec-label">&#127757; Environment</div>
           <span class="dash-env-badge" style="background:${aqiCategory.color}22;color:${aqiCategory.color};border-color:${aqiCategory.color}55">AQI: ${aqiCategory.tier}</span>
           <p style="font-size:9.5px;color:#94a3b8;margin:6px 0 0;line-height:1.4">${aqiCategory.desc}</p>
         </div>
         <div class="dash-result-section">
-          <div class="dash-sec-label">🔬 System Matrix</div>
+          <div class="dash-sec-label">&#128300; System Matrix</div>
+          <p style="font-size:8px;color:#475569;margin:0 0 5px 0">Computed from inputs — no randomness</p>
           <div class="dash-risk-matrix">${matrixHtml}</div>
         </div>
       </div>
@@ -258,7 +272,7 @@ export function renderAssessmentResults(assessment) {
       <!-- AI Advisory (Paragraph Form) -->
       ${advisoryParas ? `
       <div class="dash-result-section" style="border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;background:rgba(255,255,255,0.03)">
-        <div class="dash-sec-label" style="margin-bottom:8px">🤖 AI Health Advisory</div>
+        <div class="dash-sec-label" style="margin-bottom:8px">&#129302; AI Health Advisory</div>
         <div style="border-left:2px solid ${color}66;padding-left:10px">
           ${advisoryParas}
         </div>
@@ -266,7 +280,7 @@ export function renderAssessmentResults(assessment) {
 
       ${warnHtml}
 
-      <div class="dash-disclaimer">⚠️ ${disclaimer}</div>
+      <div class="dash-disclaimer">&#9888;&#65039; ${disclaimer}</div>
     </div>
   `;
 }
