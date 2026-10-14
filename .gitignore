@@ -4,6 +4,15 @@ dist/
 *.local
 *.tsbuildinfo
 
-# Local env (API keys) — DO NOT COMMIT
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# Local env (API keys)
 .env
 .env.local

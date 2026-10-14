@@ -11,7 +11,7 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 import ChatbotWidget from './components/ChatbotWidget';
-import FossilGallery from './components/FossilGallery';
+import OrganSystemsGallery from './components/OrganSystemsGallery';
 
 
 // --- ANIMATION VARIANTS ---
@@ -456,9 +456,9 @@ export default function App() {
           ))}
         </motion.div>
 
-        {/* 2D. PREHISTORIC SPECIMENS & DINOSAURS EXHIBIT */}
+        {/* 2D. PHYSIOLOGICAL ORGAN SYSTEMS ATLAS */}
         <div className="w-full pb-20 z-10">
-          <FossilGallery />
+          <OrganSystemsGallery />
         </div>
 
         {/* 2E. BOTTOM TEXT */}

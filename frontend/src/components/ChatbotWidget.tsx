@@ -14,7 +14,7 @@ interface Message {
   sources?: Source[];
 }
 
-const DEFAULT_API_URL = "http://127.0.0.1:8000";
+const DEFAULT_API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 const BASE = import.meta.env.BASE_URL;
 
 
@@ -151,7 +151,7 @@ export default function ChatbotWidget() {
     {
       id: 'welcome',
       role: 'ai',
-      text: "### 👋 Welcome to the 3D Anatomy & Museum AI Assistant\nI am your interactive intelligence guide across human physiology, health analytics, and museum specimens.\n\n**What I can help you explore:**\n- **🦴 3D Human Anatomy:** 206 articulated bones, muscle biomechanics, circulatory networks, and neural pathways.\n- **📊 AI Health Advisor:** Real-time analysis of vitals (Heart Rate, BP, SpO₂, BMI) paired with ambient Air Quality Index (AQI).\n- **🦕 Prehistoric Exhibits:** Dinosaurs, fossil biomechanics, and natural history specimens.\n- **📄 Document Intelligence:** Upload research or medical PDFs to index them and ask cited questions!\n\n💡 **Tip:** Ask me any medical or anatomical question, or click any 3D body part to explore!",
+      text: "### 👋 Welcome to the 3D Anatomy & Smart Health AI Assistant\nI am your interactive biomedical guide across human physiology, vital biometrics, and environmental health risk analytics.\n\n**What I can help you explore:**\n- **🦴 3D Human Anatomy:** 206 articulated bones, organ systems, cardiovascular circulation, and neural pathways.\n- **📊 AI Health Advisor:** Real-time risk modeling combining vitals (Heart Rate, BP, SpO₂, BMI) with ambient Air Quality Index (AQI & PM2.5).\n- **🧬 Multi-System Heuristics:** Cross-system symptom burden analysis and explainable clinical risk scores.\n- **📄 Medical Document Intelligence:** Upload medical reports or research PDFs to index them and ask cited questions!\n\n💡 **Tip:** Ask me any medical or anatomical question, or click any 3D body part to explore!",
     }
   ]);
   const [inputText, setInputText] = useState('');
@@ -240,7 +240,7 @@ export default function ChatbotWidget() {
   const handleExportChat = () => {
     const timestamp = new Date().toLocaleString();
     let transcript = `=================================================================\n`;
-    transcript += `NATURAL HISTORY MUSEUM & 3D ANATOMY ATLAS - AI CHAT TRANSCRIPT\n`;
+    transcript += `SMART HEALTH ADVISORY SYSTEM & 3D ANATOMY ATLAS - AI CHAT TRANSCRIPT\n`;
     transcript += `Exported: ${timestamp}\n`;
     if (uploadedDoc) {
       transcript += `Document: ${uploadedDoc.name} (${uploadedDoc.chunks} vectorized chunks)\n`;
@@ -264,14 +264,14 @@ export default function ChatbotWidget() {
     });
 
     transcript += `=================================================================\n`;
-    transcript += `End of Chat Log - Exported from Natural History Museum AI Guide\n`;
+    transcript += `End of Chat Log - Exported from Smart Health Advisory System AI Guide\n`;
     transcript += `=================================================================\n`;
 
     const blob = new Blob([transcript], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Museum_AI_Chat_Export_${new Date().toISOString().slice(0, 10)}_${Date.now().toString().slice(-4)}.txt`;
+    link.download = `Health_AI_Chat_Export_${new Date().toISOString().slice(0, 10)}_${Date.now().toString().slice(-4)}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -287,12 +287,12 @@ export default function ChatbotWidget() {
 
     // 1. Greetings & Conversational
     if (/^(hi|hello|hey|greetings|good morning|good evening|who are you|what can you do|help|start)/i.test(q)) {
-      return `### 👋 Welcome to the 3D Anatomy & Health AI Assistant\nI am your interactive intelligence guide across human physiology, health analytics, and museum specimens.\n\n**What I can help you explore:**\n- **🦴 3D Human Anatomy:** 206 articulated bones, muscle biomechanics, circulatory networks, and neural pathways.\n- **📊 AI Health Advisor:** Real-time analysis of vitals (Heart Rate, BP, SpO₂, BMI) paired with ambient Air Quality Index (AQI).\n- **🦕 Prehistoric Exhibits:** Dinosaurs, fossil biomechanics, and natural history specimens.\n- **📄 Document Intelligence:** Upload research or medical PDFs to index them and ask cited questions!\n\n💡 **Tip:** Ask me any medical or anatomical question, or click any 3D body part to explore!`;
+      return `### 👋 Welcome to the 3D Anatomy & Smart Health AI Assistant\nI am your interactive biomedical guide across human physiology, vital biometrics, and environmental health risk analytics.\n\n**What I can help you explore:**\n- **🦴 3D Human Anatomy:** 206 articulated bones, organ systems, cardiovascular circulation, and neural pathways.\n- **📊 AI Health Advisor:** Real-time risk modeling combining vitals (Heart Rate, BP, SpO₂, BMI) with ambient Air Quality Index (AQI & PM2.5).\n- **🧬 Multi-System Heuristics:** Cross-system symptom burden analysis and explainable clinical risk scores.\n- **📄 Medical Document Intelligence:** Upload medical reports or research PDFs to index them and ask cited questions!\n\n💡 **Tip:** Ask me any medical or anatomical question, or click any 3D body part to explore!`;
     }
 
-    // 2. Prehistoric Specimens / Dinosaurs / Fossils / Paleontology
-    if (/dino|fossil|specimen|trex|t-rex|tyrannosaur|triceratop|pterodactyl|jurassic|cretaceous|paleontol|amber|extinct|prehistoric/i.test(q)) {
-      return `### 🦖 Prehistoric Specimens & Paleontology Exhibit\n\nOur museum collection features iconic prehistoric specimens preserved across geological eras:\n\n- **Tyrannosaurus Rex:** Late Cretaceous apex predator with a massive skull engineered for a bone-crushing bite force exceeding **35,000 Newtons**.\n- **Triceratops Prorsus:** Heavily armored ceratopsian possessing a fused solid-bone parietosquamosal frill and three defensive rostral horns.\n- **Pterodactyl & Pterosaurs:** Flying Mesozoic archosaurs with hollow pneumatic bones and elongated fourth wing fingers supporting membranous flight patagia.\n- **Fossilization Science:** Permineralization replaces organic bone matrices with silica and calcite over millions of years under anoxic sedimentary conditions.\n\n💡 **Museum Tip:** Scroll down to the **Prehistoric Specimens & Dinosaurs** gallery on the main landing page to view our curated 3D exhibits!`;
+    // 2. Health Risk Engine / Algorithm / Scoring / Heuristics
+    if (/risk|score|algorithm|calculate|heuristic|multiplier|formula|engine|attribution/i.test(q)) {
+      return `### 🧬 AI Health Risk Engine & Clinical Attribution Matrix\n\nOur multi-factorial risk engine computes a continuous 0–100 health risk score and stratified tier (Low, Moderate, High, Urgent):\n\n- **Multi-Factorial Weighting:**\n  • **Physiological Vitals (35%):** Heart rate deviations, SpO₂ hypoxemia, systolic/diastolic blood pressure, respiratory rate.\n  • **Symptom Presentation (30%):** Weighted cross-system symptom burden (chest pain, dyspnea, fatigue, dizziness).\n  • **Environmental AQI & PM2.5 (25%):** Atmospheric particulate tiers (0–500 scale) directly linked to pulmonary and cardiovascular strain.\n  • **Lifestyle & Habits (10%):** Tobacco use, physical activity levels, hydration index, and sleep duration.\n- **Cross-Factor Synergy Multipliers:** When ambient AQI exceeds 150 alongside respiratory symptoms, pulmonary risk is amplified by 25%.\n- **Multi-System Attribution:** Decomposes risk proportionally across Hemodynamics, Symptoms, Environment, and Lifestyle.\n\n💡 **Clinical Tip:** Open the **AI Health Advisor** from the top bar to run a personalized health risk assessment!`;
     }
 
     // 3. Cardiovascular System / Heart / Blood Pressure
@@ -426,7 +426,7 @@ export default function ChatbotWidget() {
       {
         id: String(Date.now()),
         role: 'ai',
-        text: "Chat cleared! How can I assist your exploration of natural history, prehistoric life, or human anatomy today?",
+        text: "Chat cleared! How can I assist your exploration of human anatomy, vital biometrics, or health risk analytics today?",
       }
     ]);
   };
