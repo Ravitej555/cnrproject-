@@ -143,16 +143,8 @@ async def upload_document(file: UploadFile = File(...)):
     }
 
 
-@app.post("/ask-stream")
-async def ask_stream(payload: QuestionRequest):
-    """
-    Streams an explainable, structured AI response.
-    If an uploaded document exists, retrieves relevant context chunks and cites sources.
-    Otherwise, references the multi-system clinical knowledge base.
-    """
-    query = payload.question.strip()
-
-    # Check for relevant context in uploaded documents
+def generate_clinical_answer(query: str):
+    """Generates an explainable clinical response referencing indexed docs or clinical knowledge base."""
     rag_results = rag_engine.search(query, top_k=3)
     sources = []
     rag_context = ""
@@ -161,7 +153,6 @@ async def ask_stream(payload: QuestionRequest):
         sources = [{"source": r["source"], "page": r["page"]} for r in rag_results]
         rag_context = "\n\n".join([f"[From {r['source']}, Page {r['page']}]: {r['text']}" for r in rag_results])
 
-    # Generate response content
     q_lower = query.lower()
 
     if rag_context:
@@ -240,6 +231,27 @@ async def ask_stream(payload: QuestionRequest):
             "- **Holistic Health Management:** Regular cardiovascular exercise, adequate hydration (>2.5 L/day), and monitoring local AQI preserve organ vitality.\n\n"
             "💡 **Tip:** You can ask about any specific organ system (Heart, Lungs, Brain, Kidneys, Skeleton), or upload a medical PDF to ask cited questions!"
         )
+
+    return response_text, sources
+
+
+@app.post("/ask")
+async def ask_endpoint(payload: QuestionRequest):
+    """Non-streaming AI answer endpoint returning structured JSON."""
+    response_text, sources = generate_clinical_answer(payload.question.strip())
+    return {
+        "success": True,
+        "answer": response_text,
+        "sources": sources
+    }
+
+
+@app.post("/ask-stream")
+async def ask_stream(payload: QuestionRequest):
+    """
+    Streams an explainable, structured AI response.
+    """
+    response_text, sources = generate_clinical_answer(payload.question.strip())
 
     # Stream the response word by word in NDJSON format expected by ChatbotWidget
     async def stream_generator():

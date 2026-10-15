@@ -823,7 +823,7 @@ The human lower limb is an extraordinary biomechanical marvel engineered for bip
 
         // Try FastAPI
         try {
-          const apiBase = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) || 'http://127.0.0.1:8000';
+          const apiBase = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) || 'https://cnrproject-2.onrender.com';
           const res = await fetch(`${apiBase}/ask`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

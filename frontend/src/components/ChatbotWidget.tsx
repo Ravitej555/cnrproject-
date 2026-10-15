@@ -14,7 +14,7 @@ interface Message {
   sources?: Source[];
 }
 
-const DEFAULT_API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+const DEFAULT_API_URL = import.meta.env.VITE_API_URL || "https://cnrproject-2.onrender.com";
 const BASE = import.meta.env.BASE_URL;
 
 
