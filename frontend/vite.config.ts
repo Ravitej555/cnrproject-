@@ -5,7 +5,7 @@ import { resolve } from 'path';
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: process.env.NODE_ENV === 'production' ? '/cnrproject-/' : '/',
+  base: process.env.GITHUB_ACTIONS ? '/cnrproject-/' : '/',
   plugins: [
     react(),
     tailwindcss(),
